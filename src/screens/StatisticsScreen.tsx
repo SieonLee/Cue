@@ -1,8 +1,3 @@
-/**
- * StatisticsScreen — Learning statistics dashboard.
- * Shows session counts, feedback distribution, action performance,
- * and 7-day vs all-time trends using View-based progress bars.
- */
 import React, { useCallback, useMemo, useState } from "react";
 import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
@@ -44,7 +39,6 @@ function loadStats(): DashData {
   );
   const avgReward = avgRow?.avg_r ?? 0;
 
-  // Last 7 days
   const sevenDaysAgo = Date.now() - 7 * 86_400_000;
   const last7Sessions = db.getFirstSync<{ cnt: number }>(
     "SELECT COUNT(*) as cnt FROM coach_sessions WHERE created_at > ?",
@@ -57,7 +51,6 @@ function loadStats(): DashData {
   );
   const last7AvgReward = last7Avg?.avg_r ?? 0;
 
-  // Per-action stats
   type AR = { chosen_action: string; cnt: number; avg_r: number };
   const actionRows = db.getAllSync<AR>(
     "SELECT chosen_action, COUNT(*) as cnt, AVG(reward) as avg_r FROM feedback GROUP BY chosen_action ORDER BY avg_r DESC"
@@ -69,7 +62,6 @@ function loadStats(): DashData {
     avgReward: r.avg_r,
   }));
 
-  // Reward distribution
   const good = db.getFirstSync<{ cnt: number }>(
     "SELECT COUNT(*) as cnt FROM feedback WHERE reward >= 0.75"
   )?.cnt ?? 0;
