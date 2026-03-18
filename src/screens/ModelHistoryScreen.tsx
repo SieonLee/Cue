@@ -1,17 +1,3 @@
-/**
- * ModelHistoryScreen — Model Evolution Tracker
- *
- * Shows how Thompson Sampling parameters have evolved over time.
- * Uses weekly snapshots stored in settings("model_history").
- *
- * Sections:
- * - Timeline: weekly posterior mean per action
- * - Convergence: CI width shrinkage over time
- * - DS methodology note
- *
- * NO psychological interpretation. ONLY model parameter data.
- */
-
 import React, { useCallback, useState } from "react";
 import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
@@ -19,8 +5,6 @@ import { getSetting } from "../db/sessions";
 import { ACTIONS } from "../coach/actions";
 import type { ActionId } from "../coach/actions";
 import { credibleInterval } from "../bandit/thompson";
-
-// ── Types ──────────────────────────────────────────────────────────────────
 
 type WeekSnapshot = {
   weekKey: string;
@@ -35,8 +19,6 @@ type ActionTimeline = {
   trend: "improving" | "declining" | "stable";
 };
 
-// ── Data loader ─────────────────────────────────────────────────────────────
-
 function loadHistory(): { snapshots: WeekSnapshot[]; timelines: ActionTimeline[] } {
   const raw = getSetting("model_history") ?? "{}";
   const history = JSON.parse(raw) as Record<string, Record<string, { alpha: number; beta: number }>>;
@@ -45,7 +27,6 @@ function loadHistory(): { snapshots: WeekSnapshot[]; timelines: ActionTimeline[]
     .map(([weekKey, actions]) => ({ weekKey, actions }))
     .sort((a, b) => a.weekKey.localeCompare(b.weekKey));
 
-  // Build timelines per action
   const allActionIds = Object.keys(ACTIONS) as ActionId[];
   const timelines: ActionTimeline[] = allActionIds.map((id) => {
     const points = snapshots.map((snap) => {
@@ -59,7 +40,6 @@ function loadHistory(): { snapshots: WeekSnapshot[]; timelines: ActionTimeline[]
 
     const currentMean = points.length > 0 ? points[points.length - 1].mean : 0.5;
 
-    // Trend: compare first half avg to second half avg
     let trend: "improving" | "declining" | "stable" = "stable";
     if (points.length >= 4) {
       const mid = Math.floor(points.length / 2);
@@ -75,8 +55,6 @@ function loadHistory(): { snapshots: WeekSnapshot[]; timelines: ActionTimeline[]
 
   return { snapshots, timelines };
 }
-
-// ── Visualization ───────────────────────────────────────────────────────────
 
 function MiniChart({ points, color }: { points: { mean: number }[]; color: string }) {
   if (points.length < 2) return null;
@@ -109,8 +87,6 @@ function trendColor(trend: "improving" | "declining" | "stable"): string {
   return trend === "improving" ? "#2a9d8f" : trend === "declining" ? "#e63946" : "#999";
 }
 
-// ── Component ───────────────────────────────────────────────────────────────
-
 export function ModelHistoryScreen() {
   const [data, setData] = useState<ReturnType<typeof loadHistory> | null>(null);
 
@@ -138,7 +114,6 @@ export function ModelHistoryScreen() {
         Shows how action effectiveness estimates change over time.
       </Text>
 
-      {/* Summary stats */}
       <View style={styles.summaryRow}>
         <View style={styles.summaryBox}>
           <Text style={styles.summaryValue}>{data.timelines.length}</Text>
@@ -156,7 +131,6 @@ export function ModelHistoryScreen() {
         </View>
       </View>
 
-      {/* Action timelines */}
       {data.timelines.map((t) => (
         <View key={t.actionId} style={styles.card}>
           <View style={styles.cardHeader}>
@@ -176,7 +150,6 @@ export function ModelHistoryScreen() {
             color={trendColor(t.trend)}
           />
 
-          {/* CI convergence */}
           {t.points.length >= 2 && (
             <View style={styles.convergenceRow}>
               <Text style={styles.convergenceLabel}>CI width:</Text>
@@ -195,10 +168,9 @@ export function ModelHistoryScreen() {
         </View>
       ))}
 
-      {/* Method note */}
-      <View style={styles.dsNote}>
-        <Text style={styles.dsLabel}>METHOD</Text>
-        <Text style={styles.dsText}>
+      <View style={styles.methodBox}>
+        <Text style={styles.methodLabel}>Method</Text>
+        <Text style={styles.methodText}>
           Weekly snapshots capture aggregated Beta(α, β) parameters per action.
           Posterior mean = α/(α+β). CI width = Q95 - Q05 of Beta distribution.
           Trend detection: compares first-half vs second-half mean (threshold: ±5pp).
@@ -208,8 +180,6 @@ export function ModelHistoryScreen() {
     </ScrollView>
   );
 }
-
-// ── Styles ──────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   container: { padding: 18, gap: 14, paddingBottom: 40 },
@@ -238,7 +208,7 @@ const styles = StyleSheet.create({
 
   dataPoints: { fontSize: 10, opacity: 0.4 },
 
-  dsNote: { borderWidth: 1, borderColor: "#ddd", borderRadius: 12, padding: 12, gap: 4, backgroundColor: "#f8f8f8" },
-  dsLabel: { fontSize: 9, fontWeight: "800", opacity: 0.4, letterSpacing: 1 },
-  dsText: { fontSize: 11, lineHeight: 16, opacity: 0.5, fontFamily: "monospace" },
+  methodBox: { borderWidth: 1, borderColor: "#ddd", borderRadius: 12, padding: 12, gap: 4, backgroundColor: "#f8f8f8" },
+  methodLabel: { fontSize: 11, fontWeight: "700", opacity: 0.6 },
+  methodText: { fontSize: 11, lineHeight: 16, opacity: 0.6 },
 });
