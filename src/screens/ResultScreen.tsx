@@ -5,12 +5,24 @@ import type { RootStackParamList } from "../navigation/AppNavigator";
 import { db } from "../db/db";
 import type { CoachContext } from "../types/models";
 import type { ActionId } from "../coach/actions";
-import { ACTIONS } from "../coach/actions";
-import { getSetting, loadBanditParams, saveBanditParams } from "../db/sessions";
+import { ACTIONS, ALL_ACTION_IDS } from "../coach/actions";
+import {
+  getSetting,
+  loadBanditParams,
+  loadLinUCBBanditParams,
+  saveBanditParams,
+  saveLinUCBBanditParams,
+} from "../db/sessions";
 import { updateTS, rankActionsWithScores } from "../bandit/thompson";
 import type { ActionScore } from "../bandit/thompson";
+import { loadLinUCBParams, updateLinUCB } from "../bandit/linucb";
 import * as Clipboard from "expo-clipboard";
-import { recordSignal, recordFingerprintEvent, implicitRewardBonus } from "../db/signals";
+import {
+  getAssignedAlgorithm,
+  implicitRewardBonus,
+  recordFingerprintEvent,
+  recordSignal,
+} from "../db/signals";
 import { useSensoryStyles } from "../hooks/useSensoryStyles";
 import { useTheme } from "../theme";
 import { font, radii, spacing } from "../theme/tokens";
@@ -443,10 +455,6 @@ export function ResultScreen({ route, navigation }: Props) {
   const { ls, lsStyles } = useSensoryStyles();
   const { sessionId } = route.params;
   currentSessionId = sessionId;
-  const [chosen, setChosen] = useState<ActionId | null>(null);
-  const [submitted, setSubmitted] = useState(false);
-  const [feedbackLabel, setFeedbackLabel] = useState<RewardLabel | null>(null);
-
   const styles = useMemo(() => themedStyles(colors), [colors]);
 
   const prefs = useMemo<Personalization>(() => {
@@ -471,15 +479,40 @@ export function ResultScreen({ route, navigation }: Props) {
     if (!row) return null;
     const ctx = JSON.parse(row.context_json) as CoachContext;
     const ranked = JSON.parse(row.ranked_json) as ActionId[];
+    const algorithm = getAssignedAlgorithm(sessionId) ?? "thompson";
 
-    const params = loadBanditParams();
     let scores: ActionScore[] = [];
-    try {
-      scores = rankActionsWithScores(ctx, ranked, params);
-    } catch {}
+    if (algorithm === "thompson") {
+      const params = loadBanditParams();
+      try {
+        scores = rankActionsWithScores(ctx, ranked, params);
+      } catch {}
+    }
 
-    return { ctx, ranked, scores };
+    return { ctx, ranked, scores, algorithm };
   }, [sessionId]);
+
+  const existingFeedback = useMemo(() => {
+    return db.getFirstSync<{
+      chosen_action: ActionId;
+      reward: number;
+    }>(
+      "SELECT chosen_action, reward FROM feedback WHERE session_id = ?",
+      [sessionId]
+    );
+  }, [sessionId]);
+
+  const [chosen, setChosen] = useState<ActionId | null>(existingFeedback?.chosen_action ?? null);
+  const [submitted, setSubmitted] = useState(Boolean(existingFeedback));
+  const [feedbackLabel, setFeedbackLabel] = useState<RewardLabel | null>(
+    existingFeedback
+      ? existingFeedback.reward >= 0.75
+        ? "Good"
+        : existingFeedback.reward >= 0.25
+          ? "Okay"
+          : "Bad"
+      : null
+  );
 
   if (!session) {
     return (
@@ -490,8 +523,13 @@ export function ResultScreen({ route, navigation }: Props) {
   }
 
   const ctx = session.ctx;
+  const algorithm = session.algorithm;
 
   function submitFeedback(label: RewardLabel) {
+    if (submitted) {
+      Alert.alert("Already saved", "This session already has feedback. Start a new session for another recommendation.");
+      return;
+    }
     if (!chosen) {
       Alert.alert("Select one", "Please pick a recommended action first.");
       return;
@@ -502,14 +540,19 @@ export function ResultScreen({ route, navigation }: Props) {
     const bonus = implicitRewardBonus(sessionId);
     const reward = Math.min(1.0, baseReward + bonus);
 
-    const params = loadBanditParams();
-    const next = updateTS(ctx, chosen, reward, params);
-    saveBanditParams(next);
+    if (algorithm === "linucb") {
+      const params = loadLinUCBParams(loadLinUCBBanditParams(), ALL_ACTION_IDS);
+      const next = updateLinUCB(ctx, chosen, reward, params);
+      saveLinUCBBanditParams(next);
+    } else {
+      const params = loadBanditParams();
+      const next = updateTS(ctx, chosen, reward, params);
+      saveBanditParams(next);
+    }
 
     // Record fingerprint event for couple pattern analysis
     recordFingerprintEvent(chosen, ctx.channel, ctx.intent, reward);
 
-    // Save feedback to DB (was previously missing!)
     db.runSync(
       "INSERT INTO feedback(session_id, chosen_action, reward, created_at, context_json) VALUES(?, ?, ?, ?, ?)",
       [sessionId, chosen, reward, Date.now(), JSON.stringify(ctx)]
@@ -669,14 +712,14 @@ export function ResultScreen({ route, navigation }: Props) {
         {submitted ? (
           <View style={styles.feedbackDone}>
             <Text style={styles.feedbackDoneText}>
-              Saved — {feedbackLabel}. Cue will use this the next time it ranks actions.
+              Saved — {feedbackLabel}. This session is locked in, and Cue will use it the next time it ranks actions.
             </Text>
             <Pressable
               style={styles.resetBtn}
-              onPress={() => { setChosen(null); setSubmitted(false); setFeedbackLabel(null); }}
-              accessibilityRole="button" accessibilityLabel="Try a different action"
+              onPress={() => navigation.navigate("Review")}
+              accessibilityRole="button" accessibilityLabel="Add a conversation review"
             >
-              <Text style={styles.resetBtnText}>Try a different action</Text>
+              <Text style={styles.resetBtnText}>Add a conversation review</Text>
             </Pressable>
           </View>
         ) : (
