@@ -152,6 +152,14 @@ export function assignAlgorithm(sessionId: string): Algorithm {
   return algo;
 }
 
+export function getAssignedAlgorithm(sessionId: string): Algorithm | null {
+  const row = db.getFirstSync<{ algorithm: Algorithm }>(
+    "SELECT algorithm FROM ab_assignments WHERE session_id = ?",
+    [sessionId]
+  );
+  return row?.algorithm ?? null;
+}
+
 export function getAlgorithmStats(): { thompson: { count: number; avgReward: number }; linucb: { count: number; avgReward: number } } {
   type Row = { algorithm: string; cnt: number; avg_r: number };
   const rows = db.getAllSync<Row>(
