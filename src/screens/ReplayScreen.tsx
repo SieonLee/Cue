@@ -4,14 +4,14 @@ import { parseConversation, type Turn } from "../nlp/sentiment";
 import { ACTIONS } from "../coach/actions";
 import type { ActionId } from "../coach/actions";
 
-type ReplayResult = {
+type ReplaySummary = {
   turns: Turn[];
   totalUrgencySignals: number;
   totalPauseSignals: number;
   actionsDetected: Map<ActionId, number>;
 };
 
-function analyzeConversation(text: string): ReplayResult {
+function analyzeConversation(text: string): ReplaySummary {
   const turns = parseConversation(text);
   let totalUrgencySignals = 0;
   let totalPauseSignals = 0;
@@ -30,11 +30,11 @@ function analyzeConversation(text: string): ReplayResult {
 
 export function ReplayScreen() {
   const [input, setInput] = useState("");
-  const [result, setResult] = useState<ReplayResult | null>(null);
+  const [summary, setSummary] = useState<ReplaySummary | null>(null);
 
   const handleAnalyze = () => {
     if (!input.trim()) return;
-    setResult(analyzeConversation(input));
+    setSummary(analyzeConversation(input));
   };
 
   return (
@@ -53,35 +53,35 @@ export function ReplayScreen() {
         <Text style={styles.analyzeBtnText}>Analyze conversation</Text>
       </Pressable>
 
-      {result && (
+      {summary && (
         <View style={styles.results}>
           {/* Summary counts */}
           <View style={styles.summaryRow}>
             <View style={styles.summaryBox}>
-              <Text style={styles.summaryNum}>{result.turns.length}</Text>
+              <Text style={styles.summaryNum}>{summary.turns.length}</Text>
               <Text style={styles.summaryLabel}>turns</Text>
             </View>
             <View style={styles.summaryBox}>
-              <Text style={styles.summaryNum}>{result.actionsDetected.size}</Text>
+              <Text style={styles.summaryNum}>{summary.actionsDetected.size}</Text>
               <Text style={styles.summaryLabel}>actions used</Text>
             </View>
             <View style={styles.summaryBox}>
-              <Text style={[styles.summaryNum, { color: result.totalUrgencySignals > 0 ? "#e76f51" : "#2a9d8f" }]}>
-                {result.totalUrgencySignals}
+              <Text style={[styles.summaryNum, { color: summary.totalUrgencySignals > 0 ? "#e76f51" : "#2a9d8f" }]}>
+                {summary.totalUrgencySignals}
               </Text>
               <Text style={styles.summaryLabel}>urgency signals</Text>
             </View>
             <View style={styles.summaryBox}>
-              <Text style={[styles.summaryNum, { color: "#2a9d8f" }]}>{result.totalPauseSignals}</Text>
+              <Text style={[styles.summaryNum, { color: "#2a9d8f" }]}>{summary.totalPauseSignals}</Text>
               <Text style={styles.summaryLabel}>pause signals</Text>
             </View>
           </View>
 
           {/* Actions detected summary */}
-          {result.actionsDetected.size > 0 && (
+          {summary.actionsDetected.size > 0 && (
             <View style={styles.card}>
               <Text style={styles.sectionLabel}>Detected actions</Text>
-              {Array.from(result.actionsDetected.entries()).map(([id, count]) => (
+              {Array.from(summary.actionsDetected.entries()).map(([id, count]) => (
                 <View key={id} style={styles.actionSummaryRow}>
                   <Text style={styles.actionSummaryTitle}>{ACTIONS[id]?.title ?? id}</Text>
                   <Text style={styles.actionSummaryCount}>{count}x</Text>
@@ -93,7 +93,7 @@ export function ReplayScreen() {
           {/* Turn-by-turn */}
           <View style={styles.card}>
             <Text style={styles.sectionLabel}>Turn by turn</Text>
-            {result.turns.map((t, i) => (
+            {summary.turns.map((t, i) => (
               <View key={i} style={styles.turnRow}>
                 <Text style={styles.turnSpeaker}>{t.speaker}</Text>
                 <View style={{ flex: 1 }}>
@@ -111,11 +111,11 @@ export function ReplayScreen() {
           </View>
 
           {/* Actions NOT detected — suggestions */}
-          {result.actionsDetected.size < 3 && (
+          {summary.actionsDetected.size < 3 && (
             <View style={styles.suggestCard}>
               <Text style={styles.sectionLabel}>Ideas for next time</Text>
               {(Object.keys(ACTIONS) as ActionId[])
-                .filter((id) => !result.actionsDetected.has(id))
+                .filter((id) => !summary.actionsDetected.has(id))
                 .slice(0, 3)
                 .map((id) => (
                   <View key={id} style={styles.suggestRow}>
