@@ -17,6 +17,24 @@ It combines:
 - A/B comparison against LinUCB
 - feedback collection, analytics, and model transparency
 
+## Why This Is Portfolio-Relevant
+
+Cue sits at the intersection of product design and applied machine learning.
+
+From a recruiter perspective, the project shows:
+
+- a clear recommendation problem instead of a generic CRUD app
+- local persistence and state management in a real app flow
+- contextual ranking with multiple policies instead of a fixed rules engine
+- a closed feedback loop where saved outcomes influence future recommendations
+- enough product surface area to discuss tradeoffs, instrumentation, and evaluation
+
+The strongest part of the project is the core loop:
+
+`Onboarding -> Coach -> Result -> Feedback -> Review`
+
+That loop is where the recommendation logic, user context, and learning behavior come together.
+
 ## Problem Framing
 
 From a data-science perspective, Cue can be framed as a contextual recommendation problem:
@@ -93,6 +111,8 @@ The results flow presents:
 
 After a conversation, users can record outcomes and review how the suggestion worked. Feedback updates local model state and influences future recommendations.
 
+This is the part of the product I would emphasize most in a portfolio review. It makes the app feel like an adaptive decision system rather than a static advice tool.
+
 ## Recommendation System
 
 ### Context-Based Candidate Filtering
@@ -156,16 +176,17 @@ Sessions can be assigned to different ranking algorithms, including:
 
 This project is evaluated more like a product than a single offline benchmark.
 
-Useful evaluation views include:
+The most useful checks for this app are:
 
-- average reward by action
+- recommendation acceptance by action
+- average reward by algorithm assignment
+- top-ranked action selection rate
 - average reward by context bucket
 - recent versus all-time reward trends
-- Thompson Sampling versus LinUCB performance
-- action-level uncertainty through credible intervals
+- uncertainty reduction as more feedback is collected
 - usage behavior through copy events, follow-through, and review completion
 
-Useful next steps would be:
+The app already exposes part of this through local analytics and model history screens. The next logical step would be:
 
 - offline replay evaluation
 - simulation-based comparison of ranking policies
@@ -239,6 +260,8 @@ The current app surface includes:
 - bandit stats and model history
 - settings, export, and reset tools
 - theme-aware and sensory-aware UI behavior
+
+For portfolio purposes, I would treat these as supporting features around the main recommendation flow rather than the headline story. The strongest user journey is still the coaching and feedback loop.
 
 ## Tech Stack
 
@@ -339,6 +362,12 @@ Run on web:
 npm run web
 ```
 
+Run the logic tests:
+
+```bash
+npm test
+```
+
 ## Screenshots
 
 Representative product screens:
@@ -366,6 +395,6 @@ Additional screens captured for documentation:
 
 ## Next Steps
 
-- add automated tests for recommendation and persistence logic
-- align branding between the repo name `NBACoach` and the in-app name `Cue`
-- add an architecture diagram for the recommendation and feedback loop
+- add offline replay evaluation for saved sessions
+- compare Thompson Sampling and LinUCB over longer local usage windows
+- add a simple architecture diagram for the recommendation and feedback loop
