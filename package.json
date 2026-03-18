@@ -6,7 +6,8 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "test": "tsx --test tests/**/*.test.ts"
   },
   "dependencies": {
     "@react-navigation/native": "^7.1.28",
@@ -24,6 +25,7 @@
   },
   "devDependencies": {
     "@types/react": "~19.1.0",
+    "tsx": "^4.20.6",
     "typescript": "~5.9.2"
   },
   "private": true
