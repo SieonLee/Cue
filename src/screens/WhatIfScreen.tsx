@@ -10,8 +10,6 @@ import { bucketKey } from "../bandit/thompson";
 import { ruleCandidates } from "../coach/recommend";
 import type { CoachContext } from "../types/models";
 
-// ── Types ──────────────────────────────────────────────────────────────────
-
 type SessionWithOutcome = {
   sessionId: string;
   createdAt: number;
@@ -39,8 +37,6 @@ type WhatIfAnalysis = {
   insight: string;
 };
 
-// ── Data Loading ───────────────────────────────────────────────────────────
-
 function loadBadSessions(): SessionWithOutcome[] {
   type Row = {
     session_id: string;
@@ -61,7 +57,6 @@ function loadBadSessions(): SessionWithOutcome[] {
 
   return rows.map((r) => {
     const ctx = JSON.parse(r.context_json) as CoachContext;
-    // Try to get emotion data from outcome_reviews
     const review = db.getFirstSync<{ emotion_before: number; emotion_after: number }>(
       "SELECT emotion_before, emotion_after FROM outcome_reviews WHERE session_id = ?",
       [r.session_id]
@@ -85,7 +80,6 @@ function computeCounterfactual(session: SessionWithOutcome): WhatIfAnalysis {
   const table: Record<string, BetaParams> = params[key] ?? {};
   const candidates = ruleCandidates(session.context);
 
-  // Estimate success probability for each candidate using posterior mean
   const chosenParams = table[session.chosenAction] ?? { alpha: 1, beta: 1 };
   const chosenEstimate = chosenParams.alpha / (chosenParams.alpha + chosenParams.beta);
 
@@ -111,7 +105,6 @@ function computeCounterfactual(session: SessionWithOutcome): WhatIfAnalysis {
     ? Math.max(0, bestAlternative.estimatedSuccess - session.reward)
     : 0;
 
-  // Generate insight
   let insight = "";
   if (bestAlternative && bestAlternative.advantage > 0.15) {
     insight = `Next time in this situation, try "${bestAlternative.title}" — the model estimates ${Math.round(bestAlternative.estimatedSuccess * 100)}% success (vs ${Math.round(chosenEstimate * 100)}% for your choice).`;
@@ -123,8 +116,6 @@ function computeCounterfactual(session: SessionWithOutcome): WhatIfAnalysis {
 
   return { session, chosenEstimate, alternatives, bestAlternative, regret, insight };
 }
-
-// ── Helpers ────────────────────────────────────────────────────────────────
 
 function rewardLabel(r: number): string {
   if (r >= 0.8) return "Good";
@@ -142,8 +133,6 @@ function formatDate(ts: number): string {
   const d = new Date(ts);
   return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
-
-// ── Component ──────────────────────────────────────────────────────────────
 
 export function WhatIfScreen() {
   const [sessions, setSessions] = useState<SessionWithOutcome[]>([]);
@@ -285,10 +274,9 @@ export function WhatIfScreen() {
         </View>
       )}
 
-      {/* Method note */}
-      <View style={styles.portfolioNote}>
-        <Text style={styles.portfolioLabel}>METHOD</Text>
-        <Text style={styles.portfolioText}>
+      <View style={styles.methodBox}>
+        <Text style={styles.methodLabel}>Method</Text>
+        <Text style={styles.methodText}>
           Counterfactual estimation using Thompson Sampling posterior means.
           For each context bucket, Beta(a,b) posteriors give P(success|action) estimates.
           Regret = max(P(success|a*)) - P(success|chosen_action).
@@ -297,8 +285,6 @@ export function WhatIfScreen() {
     </ScrollView>
   );
 }
-
-// ── Styles ──────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   container: { padding: 18, gap: 14, paddingBottom: 40 },
@@ -345,7 +331,7 @@ const styles = StyleSheet.create({
   insightCard: { borderWidth: 2, borderColor: "#2a9d8f", borderRadius: 12, padding: 14, gap: 6, backgroundColor: "#f0faf9" },
   insightText: { fontSize: 14, lineHeight: 20, fontWeight: "500" },
 
-  portfolioNote: { borderWidth: 1, borderColor: "#ddd", borderRadius: 12, padding: 12, gap: 4, backgroundColor: "#f8f8f8" },
-  portfolioLabel: { fontSize: 9, fontWeight: "800", opacity: 0.4, letterSpacing: 1 },
-  portfolioText: { fontSize: 11, lineHeight: 16, opacity: 0.5, fontFamily: "monospace" },
+  methodBox: { borderWidth: 1, borderColor: "#ddd", borderRadius: 12, padding: 12, gap: 4, backgroundColor: "#f8f8f8" },
+  methodLabel: { fontSize: 11, fontWeight: "700", opacity: 0.6 },
+  methodText: { fontSize: 11, lineHeight: 16, opacity: 0.6 },
 });
