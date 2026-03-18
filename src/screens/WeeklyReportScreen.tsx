@@ -180,7 +180,7 @@ export function WeeklyReportScreen() {
       {/* Top action */}
       {data.topAction && (
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Most-used action</Text>
+          <Text style={styles.cardTitle}>Most used this week</Text>
           <Text style={styles.topActionName}>
             {getActionLabel(data.topAction.id)}
           </Text>
@@ -192,13 +192,13 @@ export function WeeklyReportScreen() {
 
       {/* Observation */}
       <View style={styles.recCard}>
-        <Text style={styles.recLabel}>WEEKLY OBSERVATION</Text>
+        <Text style={styles.recLabel}>This week</Text>
         <Text style={styles.recText}>{data.observation}</Text>
       </View>
 
       {data.sessions === 0 && (
         <Text style={styles.emptyNote}>
-          No sessions this week yet. Start a coaching session to see your weekly summary fill up.
+          No sessions yet this week. Start one and this summary will update here.
         </Text>
       )}
 
