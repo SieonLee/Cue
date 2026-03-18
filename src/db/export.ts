@@ -1,12 +1,7 @@
-/**
- * Data export and reset utilities.
- * All data stays on-device — export copies JSON to clipboard.
- */
+// Export and reset helpers.
 import { db } from "./db";
 import type { CoachContext } from "../types/models";
 import type { ActionId } from "../coach/actions";
-
-// ── Export all data as JSON ─────────────────────────────────────────────────
 
 export function exportAllDataJson(): string {
   type SessionRow = { id: string; created_at: number; context_json: string; ranked_json: string };
@@ -56,16 +51,12 @@ export function exportAllDataJson(): string {
   return JSON.stringify(data, null, 2);
 }
 
-// ── Reset learning data only ────────────────────────────────────────────────
-
 export function resetLearningData() {
   db.runSync("DELETE FROM bandit_params");
   db.runSync("DELETE FROM ab_assignments");
   db.runSync("DELETE FROM fingerprint_events");
   db.runSync("DELETE FROM implicit_signals");
 }
-
-// ── Reset all data (keep settings + profile preferences) ────────────────────
 
 export function resetAllData() {
   db.runSync("DELETE FROM coach_sessions");
@@ -80,5 +71,5 @@ export function resetAllData() {
   db.runSync("DELETE FROM goals");
   db.runSync("DELETE FROM badges");
   db.runSync("DELETE FROM lesson_progress");
-  // Keep: settings, profile_assessment
+  // Keep settings and saved preferences.
 }
