@@ -1,16 +1,3 @@
-/**
- * Implicit Feedback Signal Tracker
- *
- * Captures behavioral signals that indicate action quality without
- * requiring explicit Good/Okay/Bad feedback:
- *
- * - 'copy': user copied a script template
- * - 'script_edit': user edited a script (engagement signal)
- * - 'timer_complete': user completed a timeout timer
- * - 'session_return': user returned to app after a session (hours since)
- * - 'daily_checkin': user completed evening check-in
- */
-
 import { db } from "./db";
 
 export type SignalType = "copy" | "script_edit" | "timer_complete" | "session_return" | "daily_checkin";
@@ -22,10 +9,7 @@ export function recordSignal(sessionId: string | null, type: SignalType, value?:
   );
 }
 
-/**
- * Compute an implicit reward bonus for a session based on behavioral signals.
- * Returns a value 0.0–0.3 that can be ADDED to explicit reward.
- */
+// Small reward bump based on follow-through after the session.
 export function implicitRewardBonus(sessionId: string): number {
   type Row = { signal_type: string; value: string | null };
   const signals = db.getAllSync<Row>(
@@ -38,25 +22,22 @@ export function implicitRewardBonus(sessionId: string): number {
   for (const s of signals) {
     switch (s.signal_type) {
       case "copy":
-        bonus += 0.1; // copied = engaged
+        bonus += 0.1;
         break;
       case "script_edit":
-        bonus += 0.15; // edited = deeply engaged
+        bonus += 0.15;
         break;
       case "timer_complete":
-        bonus += 0.1; // completed timeout
+        bonus += 0.1;
         break;
       case "session_return":
-        // Returned within 24h = positive signal
         if (s.value && parseFloat(s.value) < 24) bonus += 0.05;
         break;
     }
   }
 
-  return Math.min(0.3, bonus); // cap at 0.3
+  return Math.min(0.3, bonus);
 }
-
-// ── Daily Loop ──────────────────────────────────────────────────────────
 
 export function todayKey(): string {
   const d = new Date();
@@ -97,8 +78,6 @@ export function completeEveningCheckin(hadConversation: boolean, went: string | 
     [key, hadConversation ? 1 : 0, went, Date.now()]
   );
 }
-
-// ── Couple Fingerprint ──────────────────────────────────────────────────
 
 export function recordFingerprintEvent(
   actionId: string,
@@ -162,12 +141,9 @@ export function getCoupleFingerprint(): FingerprintInsight {
   };
 }
 
-// ── A/B Test Assignment ─────────────────────────────────────────────────
-
 export type Algorithm = "thompson" | "linucb";
 
 export function assignAlgorithm(sessionId: string): Algorithm {
-  // Simple 50/50 random assignment
   const algo: Algorithm = Math.random() < 0.5 ? "thompson" : "linucb";
   db.runSync(
     "INSERT INTO ab_assignments(session_id, algorithm, created_at) VALUES(?, ?, ?)",
