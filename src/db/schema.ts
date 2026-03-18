@@ -125,8 +125,6 @@ CREATE TABLE IF NOT EXISTS fingerprint_events (
 );
 `;
 
-// ── V2 Migration ──────────────────────────────────────────────────────────
-
 export const MIGRATIONS = [
   {
     version: 2,
