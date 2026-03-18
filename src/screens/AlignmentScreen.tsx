@@ -21,14 +21,14 @@ type ContextStat = {
   topAction: string;
 };
 
-type DashboardData = {
+type AlignmentSummary = {
   actionStats: ActionStat[];
   contextStats: ContextStat[];
   totalSessions: number;
   totalReviews: number;
 };
 
-function loadDashboard(): DashboardData {
+function loadAlignmentSummary(): AlignmentSummary {
   type ActionRow = { chosen_action: string; avg_r: number; cnt: number; wua: number };
   const actionRows = db.getAllSync<ActionRow>(
     `SELECT f.chosen_action, AVG(f.reward) as avg_r, COUNT(*) as cnt,
@@ -84,13 +84,13 @@ function rewardColor(r: number): string {
 }
 
 export function AlignmentScreen() {
-  const [data, setData] = useState<DashboardData | null>(null);
+  const [summary, setSummary] = useState<AlignmentSummary | null>(null);
 
-  useFocusEffect(useCallback(() => { setData(loadDashboard()); }, []));
+  useFocusEffect(useCallback(() => { setSummary(loadAlignmentSummary()); }, []));
 
-  if (!data) return null;
+  if (!summary) return null;
 
-  if (data.totalSessions === 0) {
+  if (summary.totalSessions === 0) {
     return (
       <View style={styles.emptyContainer}>
         <Text style={styles.emptyTitle}>Nothing here yet</Text>
@@ -106,15 +106,15 @@ export function AlignmentScreen() {
       {/* Stats */}
       <View style={styles.statsRow}>
         <View style={styles.statBox}>
-          <Text style={styles.statValue}>{data.totalSessions}</Text>
+          <Text style={styles.statValue}>{summary.totalSessions}</Text>
           <Text style={styles.statLabel}>sessions</Text>
         </View>
         <View style={styles.statBox}>
-          <Text style={styles.statValue}>{data.totalReviews}</Text>
+          <Text style={styles.statValue}>{summary.totalReviews}</Text>
           <Text style={styles.statLabel}>reviews</Text>
         </View>
         <View style={styles.statBox}>
-          <Text style={styles.statValue}>{data.actionStats.length}</Text>
+          <Text style={styles.statValue}>{summary.actionStats.length}</Text>
           <Text style={styles.statLabel}>actions tried</Text>
         </View>
       </View>
@@ -122,7 +122,7 @@ export function AlignmentScreen() {
       {/* Action Effectiveness */}
       <View style={styles.card}>
         <Text style={styles.sectionLabel}>Action performance</Text>
-        {data.actionStats.map((a, idx) => (
+        {summary.actionStats.map((a, idx) => (
           <View key={a.actionId} style={styles.actionRow}>
             <Text style={styles.actionRank}>#{idx + 1}</Text>
             <View style={{ flex: 1 }}>
@@ -146,10 +146,10 @@ export function AlignmentScreen() {
       </View>
 
       {/* Context Breakdown */}
-      {data.contextStats.length > 0 && (
+      {summary.contextStats.length > 0 && (
         <View style={styles.card}>
           <Text style={styles.sectionLabel}>By context</Text>
-          {data.contextStats.map((c, i) => (
+          {summary.contextStats.map((c, i) => (
             <View key={i} style={styles.ctxRow}>
               <View style={{ flex: 1 }}>
                 <Text style={styles.ctxTitle}>{c.intent} / {c.channel}</Text>
