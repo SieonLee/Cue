@@ -99,8 +99,8 @@ export function LiveCoachScreen() {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.subtitle}>
-        Describe the situation or paste a message.{"\n"}
-        Get action recommendations with ready-to-use templates.
+        Describe what's happening or paste the message you're working on.{"\n"}
+        Cue will suggest a few actions and give you a draft to start from.
       </Text>
 
       <TextInput
@@ -108,16 +108,16 @@ export function LiveCoachScreen() {
         placeholder="What's happening right now?" placeholderTextColor="#aaa"
       />
       <Pressable style={styles.analyzeBtn} onPress={handleAnalyze}>
-        <Text style={styles.analyzeBtnText}>Get action guide</Text>
+        <Text style={styles.analyzeBtnText}>Get suggestions</Text>
       </Pressable>
 
       {result && result.actions.length > 0 && (
         <View style={styles.results}>
           {result.urgencyDetected && (
             <View style={styles.urgencyCard}>
-              <Text style={styles.urgencyLabel}>URGENCY PATTERNS DETECTED</Text>
+              <Text style={styles.urgencyLabel}>Urgency came up</Text>
               <Text style={styles.urgencyDesc}>
-                Consider using a Timeout (A2) or Check-in (A1) before responding to content.
+                It may help to pause first and reset the tone before replying.
               </Text>
               {result.urgencyPatterns.map((p, i) => (
                 <Text key={i} style={styles.urgencyPattern}>"{p}"</Text>
@@ -125,7 +125,7 @@ export function LiveCoachScreen() {
             </View>
           )}
 
-          <Text style={styles.sectionLabel}>RECOMMENDED ACTIONS</Text>
+          <Text style={styles.sectionLabel}>Suggested actions</Text>
           {result.actions.map((action, idx) => (
             <View key={action.actionId} style={styles.actionCard}>
               <View style={styles.actionHeader}>
@@ -138,7 +138,7 @@ export function LiveCoachScreen() {
                 </View>
               </View>
               <View style={styles.templateBox}>
-                <Text style={styles.templateLabel}>TEMPLATE (tap to copy)</Text>
+                <Text style={styles.templateLabel}>Draft reply</Text>
                 <Pressable onPress={() => copyTemplate(action.template, idx)}>
                   <Text style={styles.templateText}>{action.template}</Text>
                 </Pressable>
@@ -152,8 +152,8 @@ export function LiveCoachScreen() {
             </View>
           ))}
 
-          <Text style={styles.dsNote}>
-            Actions ranked by Thompson Sampling. Feedback improves future recommendations.
+          <Text style={styles.note}>
+            These suggestions get better as you leave feedback.
           </Text>
         </View>
       )}
@@ -185,5 +185,5 @@ const styles = StyleSheet.create({
   copyBtn: { alignSelf: "flex-start", backgroundColor: "#2a9d8f", paddingHorizontal: 14, paddingVertical: 6, borderRadius: 8 },
   copyBtnDone: { backgroundColor: "#264653" },
   copyBtnText: { color: "white", fontWeight: "700", fontSize: 12 },
-  dsNote: { fontSize: 11, opacity: 0.4, lineHeight: 16, textAlign: "center" },
+  note: { fontSize: 11, opacity: 0.5, lineHeight: 16, textAlign: "center" },
 });
