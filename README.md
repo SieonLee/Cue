@@ -176,6 +176,16 @@ Sessions can be assigned to different ranking algorithms, including:
 
 This project is evaluated more like a product than a single offline benchmark.
 
+### Current verification snapshot
+
+| Area | Current status | Why it matters |
+| --- | --- | --- |
+| Core recommendation flow | Implemented and manually validated | Confirms the main user path works end-to-end |
+| Algorithm assignment | Thompson Sampling and LinUCB both wired into session flow | Shows policy comparison is part of the product design |
+| Feedback loop | Explicit feedback is saved and reused for future ranking | Demonstrates sequential learning instead of static advice |
+| Logic tests | Candidate filtering, context encoding, and bandit update paths covered | Adds confidence that core ranking logic is stable |
+| Type safety | `npx tsc --noEmit` passes | Reduces risk of regressions in app state and navigation |
+
 The most useful checks for this app are:
 
 - recommendation acceptance by action
