@@ -315,12 +315,12 @@ export function ConflictRadarScreen() {
       </View>
 
       {/* Method note */}
-      <View style={styles.dsNote}>
-        <Text style={styles.dsLabel}>METHOD</Text>
-        <Text style={styles.dsText}>
-          Frequency-based estimation with Laplace smoothing: P(low_outcome|day) = (bad+1)/(total+2).
-          As more data accumulates, estimates converge to true day-specific outcome rates.
-          Shows historical patterns only — not predictions about future conversations.
+      <View style={styles.methodBox}>
+        <Text style={styles.methodLabel}>Method</Text>
+        <Text style={styles.methodText}>
+          This view uses historical low-outcome rates by day and time, with light
+          smoothing when data is sparse. It is meant to show patterns in past use,
+          not predict a specific future conversation.
         </Text>
       </View>
     </ScrollView>
@@ -376,7 +376,7 @@ const styles = StyleSheet.create({
   statValue: { fontSize: 24, fontWeight: "900" },
   statLabel: { fontSize: 10, opacity: 0.5, fontWeight: "600" },
 
-  dsNote: { borderWidth: 1, borderColor: "#ddd", borderRadius: 12, padding: 12, gap: 4, backgroundColor: "#f8f8f8" },
-  dsLabel: { fontSize: 9, fontWeight: "800", opacity: 0.4, letterSpacing: 1 },
-  dsText: { fontSize: 11, lineHeight: 16, opacity: 0.5, fontFamily: "monospace" },
+  methodBox: { borderWidth: 1, borderColor: "#ddd", borderRadius: 12, padding: 12, gap: 4, backgroundColor: "#f8f8f8" },
+  methodLabel: { fontSize: 11, fontWeight: "700", opacity: 0.6 },
+  methodText: { fontSize: 11, lineHeight: 16, opacity: 0.6 },
 });
