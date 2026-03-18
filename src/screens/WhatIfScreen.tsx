@@ -154,16 +154,16 @@ export function WhatIfScreen() {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.subtitle}>
-        Explore what might have happened with different actions.
-        Uses Thompson Sampling posteriors for counterfactual estimation.
+        Look back at lower-scoring sessions and compare them with other options
+        the model would have considered in the same situation.
       </Text>
 
       {sessions.length === 0 && (
         <View style={styles.emptyCard}>
-          <Text style={styles.emptyTitle}>No Data Yet</Text>
+          <Text style={styles.emptyTitle}>Nothing to compare yet</Text>
           <Text style={styles.emptyDesc}>
-            Complete coaching sessions and provide feedback to unlock counterfactual analysis.
-            Sessions with "Okay" or "Bad" outcomes will appear here.
+            Finish a few sessions and leave feedback first.
+            Sessions with lower outcomes will show up here automatically.
           </Text>
         </View>
       )}
@@ -171,7 +171,7 @@ export function WhatIfScreen() {
       {/* Session List */}
       {sessions.length > 0 && (
         <View style={styles.card}>
-          <Text style={styles.sectionLabel}>SESSIONS TO ANALYZE</Text>
+          <Text style={styles.sectionLabel}>Recent sessions</Text>
           {sessions.slice(0, 10).map((s, i) => (
             <Pressable
               key={s.sessionId}
@@ -198,7 +198,7 @@ export function WhatIfScreen() {
         <View style={styles.analysisSection}>
           {/* What you chose */}
           <View style={styles.chosenCard}>
-            <Text style={styles.sectionLabel}>WHAT YOU CHOSE</Text>
+            <Text style={styles.sectionLabel}>Chosen action</Text>
             <View style={styles.chosenRow}>
               <View style={{ flex: 1 }}>
                 <Text style={styles.chosenAction}>{ACTIONS[analysis.session.chosenAction]?.title}</Text>
@@ -209,7 +209,7 @@ export function WhatIfScreen() {
                   {rewardLabel(analysis.session.reward)}
                 </Text>
                 <Text style={styles.chosenEstimate}>
-                  Est. {Math.round(analysis.chosenEstimate * 100)}%
+                  Model estimate {Math.round(analysis.chosenEstimate * 100)}%
                 </Text>
               </View>
             </View>
@@ -223,7 +223,7 @@ export function WhatIfScreen() {
 
           {/* Alternatives */}
           <View style={styles.card}>
-            <Text style={styles.sectionLabel}>WHAT IF YOU HAD USED...</Text>
+            <Text style={styles.sectionLabel}>Other options</Text>
             {analysis.alternatives.map((alt) => (
               <View key={alt.actionId} style={styles.altRow}>
                 <View style={{ flex: 1 }}>
@@ -249,7 +249,7 @@ export function WhatIfScreen() {
 
           {/* Regret Score */}
           <View style={styles.regretCard}>
-            <Text style={styles.sectionLabel}>ESTIMATED REGRET</Text>
+            <Text style={styles.sectionLabel}>Estimated gap</Text>
             <View style={styles.regretRow}>
               <Text style={[styles.regretValue, {
                 color: analysis.regret > 0.3 ? "#e76f51" : analysis.regret > 0.1 ? "#e9c46a" : "#2a9d8f",
@@ -268,7 +268,7 @@ export function WhatIfScreen() {
 
           {/* Insight */}
           <View style={styles.insightCard}>
-            <Text style={styles.sectionLabel}>RECOMMENDATION</Text>
+            <Text style={styles.sectionLabel}>Takeaway</Text>
             <Text style={styles.insightText}>{analysis.insight}</Text>
           </View>
         </View>
@@ -277,9 +277,8 @@ export function WhatIfScreen() {
       <View style={styles.methodBox}>
         <Text style={styles.methodLabel}>Method</Text>
         <Text style={styles.methodText}>
-          Counterfactual estimation using Thompson Sampling posterior means.
-          For each context bucket, Beta(a,b) posteriors give P(success|action) estimates.
-          Regret = max(P(success|a*)) - P(success|chosen_action).
+          These comparisons use the current Thompson Sampling estimates for the
+          same context. They are directional, not guarantees.
         </Text>
       </View>
     </ScrollView>
