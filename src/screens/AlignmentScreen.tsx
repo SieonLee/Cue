@@ -1,11 +1,3 @@
-/**
- * AlignmentScreen — Action Effectiveness Dashboard
- *
- * Shows which actions work best based on session data.
- * NO psychological profiles. NO compatibility scores.
- * NO relationship diagnosis. ONLY action success data.
- */
-
 import React, { useCallback, useState } from "react";
 import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
@@ -37,7 +29,6 @@ type DashboardData = {
 };
 
 function loadDashboard(): DashboardData {
-  // Action effectiveness
   type ActionRow = { chosen_action: string; avg_r: number; cnt: number; wua: number };
   const actionRows = db.getAllSync<ActionRow>(
     `SELECT f.chosen_action, AVG(f.reward) as avg_r, COUNT(*) as cnt,
@@ -54,7 +45,6 @@ function loadDashboard(): DashboardData {
     wouldUseAgain: r.wua,
   }));
 
-  // Context breakdown
   type CtxRow = { intent: string; channel: string; cnt: number; avg_r: number; top_action: string };
   const ctxRows = db.getAllSync<CtxRow>(
     `SELECT
