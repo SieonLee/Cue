@@ -5,8 +5,6 @@ import { db } from "../db/db";
 import { ACTIONS } from "../coach/actions";
 import type { ActionId } from "../coach/actions";
 
-// ── Types ──────────────────────────────────────────────────────────────────
-
 type DayStats = {
   day: string; // "Mon", "Tue", etc.
   dayIndex: number;
@@ -41,13 +39,10 @@ type RadarData = {
   totalDataPoints: number;
 };
 
-// ── Helpers ────────────────────────────────────────────────────────────────
-
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const DAY_NAMES_FULL = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 function loadRadarData(): RadarData {
-  // Get all sessions with feedback
   type Row = {
     session_id: string;
     created_at: number;
@@ -63,15 +58,12 @@ function loadRadarData(): RadarData {
      ORDER BY f.created_at DESC`
   );
 
-  // Day-of-week stats
   const dayBuckets: Record<number, { total: number; bad: number; rewards: number[] }> = {};
   for (let i = 0; i < 7; i++) dayBuckets[i] = { total: 0, bad: 0, rewards: [] };
 
-  // Hour stats
   const hourBuckets: Record<number, { total: number; bad: number }> = {};
   for (let i = 0; i < 24; i++) hourBuckets[i] = { total: 0, bad: 0 };
 
-  // Best action per day
   const dayActions: Record<number, Record<string, { sum: number; count: number }>> = {};
 
   for (const row of rows) {
@@ -93,7 +85,6 @@ function loadRadarData(): RadarData {
     dayActions[dayIdx][a].count++;
   }
 
-  // Build day stats
   const dayStats: DayStats[] = DAY_NAMES.map((name, i) => {
     const bucket = dayBuckets[i];
     return {
@@ -106,7 +97,6 @@ function loadRadarData(): RadarData {
     };
   });
 
-  // Build hour stats (group into 4-hour blocks for cleaner display)
   const hourStats: HourStats[] = [];
   for (let h = 0; h < 24; h++) {
     const bucket = hourBuckets[h];
@@ -120,16 +110,13 @@ function loadRadarData(): RadarData {
     }
   }
 
-  // Weekly predictions using simple frequency-based model
   const today = new Date().getDay();
   const weeklyPredictions: ConflictPrediction[] = DAY_NAMES.map((name, i) => {
     const stats = dayStats[i];
-    // Bayesian smoothing: (bad + 1) / (total + 2) — Laplace smoothing
     const probability = stats.totalSessions > 0
       ? (stats.badOutcomes + 1) / (stats.totalSessions + 2)
-      : 0.3; // prior: 30% baseline
+      : 0.3;
 
-    // Find best action for this day
     let bestAction: ActionId | null = null;
     let bestReward = 0;
     const actions = dayActions[i] ?? {};
@@ -149,7 +136,6 @@ function loadRadarData(): RadarData {
 
   const todayPrediction = weeklyPredictions[today];
 
-  // Risk factors
   const topRiskFactors: string[] = [];
   const highRiskDays = dayStats.filter((d) => d.conflictRate > 0.4 && d.totalSessions >= 2);
   if (highRiskDays.length > 0) {
@@ -161,7 +147,6 @@ function loadRadarData(): RadarData {
     topRiskFactors.push(`Lower outcome hours: ${peakHours.map((h) => `${h.hour}:00`).join(", ")}`);
   }
 
-  // Stage escalation rate
   type EscRow = { context_json: string; reward: number };
   const escRows = db.getAllSync<EscRow>(
     `SELECT cs.context_json, f.reward FROM feedback f
@@ -189,8 +174,6 @@ function loadRadarData(): RadarData {
   };
 }
 
-// ── Risk Color ─────────────────────────────────────────────────────────────
-
 function riskColor(level: string): string {
   return level === "high" ? "#e76f51" : level === "medium" ? "#e9c46a" : "#2a9d8f";
 }
@@ -201,8 +184,6 @@ function heatColor(rate: number): string {
   if (rate >= 0.15) return "#e9c46a";
   return "#2a9d8f";
 }
-
-// ── Component ──────────────────────────────────────────────────────────────
 
 export function ConflictRadarScreen() {
   const [data, setData] = useState<RadarData | null>(null);
@@ -345,8 +326,6 @@ export function ConflictRadarScreen() {
     </ScrollView>
   );
 }
-
-// ── Styles ──────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   container: { padding: 18, gap: 14, paddingBottom: 40 },
