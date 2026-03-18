@@ -12,7 +12,7 @@ import { ruleCandidates } from "../coach/recommend";
 import type { CoachContext } from "../types/models";
 
 type ActionGuide = { actionId: ActionId; title: string; template: string };
-type LiveResult = {
+type SuggestionSet = {
   urgencyDetected: boolean;
   urgencyPatterns: string[];
   actions: ActionGuide[];
@@ -50,7 +50,7 @@ function inferIntent(text: string): CoachContext["intent"] {
   return "request";
 }
 
-function analyzeAndRecommend(text: string): LiveResult {
+function analyzeAndRecommend(text: string): SuggestionSet {
   if (!text.trim()) return { urgencyDetected: false, urgencyPatterns: [], actions: [] };
 
   const signals = detectSignals(text);
@@ -81,12 +81,12 @@ function analyzeAndRecommend(text: string): LiveResult {
 
 export function LiveCoachScreen() {
   const [input, setInput] = useState("");
-  const [result, setResult] = useState<LiveResult | null>(null);
+  const [suggestions, setSuggestions] = useState<SuggestionSet | null>(null);
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
 
   const handleAnalyze = () => {
     if (!input.trim()) return;
-    setResult(analyzeAndRecommend(input));
+    setSuggestions(analyzeAndRecommend(input));
     setCopiedIdx(null);
   };
 
@@ -111,22 +111,22 @@ export function LiveCoachScreen() {
         <Text style={styles.analyzeBtnText}>Get suggestions</Text>
       </Pressable>
 
-      {result && result.actions.length > 0 && (
+      {suggestions && suggestions.actions.length > 0 && (
         <View style={styles.results}>
-          {result.urgencyDetected && (
+          {suggestions.urgencyDetected && (
             <View style={styles.urgencyCard}>
               <Text style={styles.urgencyLabel}>Urgency came up</Text>
               <Text style={styles.urgencyDesc}>
                 It may help to pause first and reset the tone before replying.
               </Text>
-              {result.urgencyPatterns.map((p, i) => (
+              {suggestions.urgencyPatterns.map((p, i) => (
                 <Text key={i} style={styles.urgencyPattern}>"{p}"</Text>
               ))}
             </View>
           )}
 
           <Text style={styles.sectionLabel}>Suggested actions</Text>
-          {result.actions.map((action, idx) => (
+          {suggestions.actions.map((action, idx) => (
             <View key={action.actionId} style={styles.actionCard}>
               <View style={styles.actionHeader}>
                 <View style={styles.rankBadge}>
