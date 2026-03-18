@@ -196,8 +196,6 @@ const LESSONS: Lesson[] = [
 
 const MODULES = ["Foundations", "De-escalation", "Connection"];
 
-// ── Helpers ─────────────────────────────────────────────────────────────────
-
 function getLessonProgress(): Map<string, { completed: boolean; score: number }> {
   type Row = { lesson_id: string; completed: number; score: number };
   const rows = db.getAllSync<Row>("SELECT lesson_id, completed, score FROM lesson_progress");
@@ -223,8 +221,6 @@ function isLessonUnlocked(lessonId: string, progress: Map<string, { completed: b
   const prev = LESSONS[idx - 1];
   return progress.get(prev.id)?.completed ?? false;
 }
-
-// ── Component ───────────────────────────────────────────────────────────────
 
 type LessonStep = "concept" | "example" | "practice" | "takeaway";
 
@@ -442,8 +438,6 @@ export function LessonsScreen({ navigation }: Props) {
     </ScrollView>
   );
 }
-
-// ── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   container: { flexGrow: 1, padding: 18, gap: 14, paddingBottom: 32 },
