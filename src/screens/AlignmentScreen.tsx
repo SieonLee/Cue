@@ -93,9 +93,9 @@ export function AlignmentScreen() {
   if (data.totalSessions === 0) {
     return (
       <View style={styles.emptyContainer}>
-        <Text style={styles.emptyTitle}>No data yet</Text>
+        <Text style={styles.emptyTitle}>Nothing here yet</Text>
         <Text style={styles.emptyDesc}>
-          Complete coaching sessions and provide feedback to see action effectiveness data here.
+          Finish a few sessions and add feedback to see which actions are working best.
         </Text>
       </View>
     );
@@ -121,7 +121,7 @@ export function AlignmentScreen() {
 
       {/* Action Effectiveness */}
       <View style={styles.card}>
-        <Text style={styles.sectionLabel}>ACTION EFFECTIVENESS (by avg outcome)</Text>
+        <Text style={styles.sectionLabel}>Action performance</Text>
         {data.actionStats.map((a, idx) => (
           <View key={a.actionId} style={styles.actionRow}>
             <Text style={styles.actionRank}>#{idx + 1}</Text>
@@ -148,7 +148,7 @@ export function AlignmentScreen() {
       {/* Context Breakdown */}
       {data.contextStats.length > 0 && (
         <View style={styles.card}>
-          <Text style={styles.sectionLabel}>BY CONTEXT (intent + channel)</Text>
+          <Text style={styles.sectionLabel}>By context</Text>
           {data.contextStats.map((c, i) => (
             <View key={i} style={styles.ctxRow}>
               <View style={{ flex: 1 }}>
