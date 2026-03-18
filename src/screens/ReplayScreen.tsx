@@ -40,8 +40,8 @@ export function ReplayScreen() {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.subtitle}>
-        Paste a conversation to see which actions were used per turn.{"\n"}
-        Format: "Me: ..." / "Partner: ..." (one per line)
+        Paste a conversation and Cue will label each turn with the closest action.{"\n"}
+        Use one line per turn, like "Me: ..." and "Partner: ..."
       </Text>
 
       <TextInput
@@ -50,7 +50,7 @@ export function ReplayScreen() {
         placeholderTextColor="#bbb"
       />
       <Pressable style={styles.analyzeBtn} onPress={handleAnalyze}>
-        <Text style={styles.analyzeBtnText}>Detect actions</Text>
+        <Text style={styles.analyzeBtnText}>Analyze conversation</Text>
       </Pressable>
 
       {result && (
@@ -80,7 +80,7 @@ export function ReplayScreen() {
           {/* Actions detected summary */}
           {result.actionsDetected.size > 0 && (
             <View style={styles.card}>
-              <Text style={styles.sectionLabel}>ACTIONS DETECTED IN CONVERSATION</Text>
+              <Text style={styles.sectionLabel}>Detected actions</Text>
               {Array.from(result.actionsDetected.entries()).map(([id, count]) => (
                 <View key={id} style={styles.actionSummaryRow}>
                   <Text style={styles.actionSummaryTitle}>{ACTIONS[id]?.title ?? id}</Text>
@@ -92,7 +92,7 @@ export function ReplayScreen() {
 
           {/* Turn-by-turn */}
           <View style={styles.card}>
-            <Text style={styles.sectionLabel}>TURN-BY-TURN</Text>
+            <Text style={styles.sectionLabel}>Turn by turn</Text>
             {result.turns.map((t, i) => (
               <View key={i} style={styles.turnRow}>
                 <Text style={styles.turnSpeaker}>{t.speaker}</Text>
@@ -113,7 +113,7 @@ export function ReplayScreen() {
           {/* Actions NOT detected — suggestions */}
           {result.actionsDetected.size < 3 && (
             <View style={styles.suggestCard}>
-              <Text style={styles.sectionLabel}>ACTIONS NOT USED (consider next time)</Text>
+              <Text style={styles.sectionLabel}>Ideas for next time</Text>
               {(Object.keys(ACTIONS) as ActionId[])
                 .filter((id) => !result.actionsDetected.has(id))
                 .slice(0, 3)
