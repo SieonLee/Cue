@@ -117,16 +117,29 @@ export function OnboardingScreen({ navigation }: Props) {
     }
 
     if (finalAnswers.pref_tone) {
-      setSetting("scriptTone", finalAnswers.pref_tone === "casual" ? "casual" : "formal");
+      const tone = finalAnswers.pref_tone === "casual" ? "casual" : "formal";
+      setSetting("tone", tone);
+      setSetting("scriptTone", tone);
     }
-    if (finalAnswers.pref_question_style === "yes_no") {
-      setSetting("yesNoHelpful", "true");
-    }
-    if (finalAnswers.pref_channel === "text") {
-      setSetting("prefersTexting", "true");
+    const prefYesNo = finalAnswers.pref_question_style === "yes_no" ? "1" : "0";
+    const prefText = finalAnswers.pref_channel === "text" ? "1" : "0";
+    setSetting("prefYesNo", prefYesNo);
+    setSetting("prefText", prefText);
+    setSetting("yesNoHelpful", prefYesNo === "1" ? "true" : "false");
+    setSetting("prefersTexting", prefText === "1" ? "true" : "false");
+    if (finalAnswers.pref_notice) {
+      const noticeHours =
+        finalAnswers.pref_notice === "max"
+          ? "24"
+          : finalAnswers.pref_notice === "hours"
+            ? "3"
+            : "0";
+      setSetting("noticeHours", noticeHours);
     }
     if (finalAnswers.pref_sensory === "low") {
       setSetting("lowSensory", "true");
+    } else {
+      setSetting("lowSensory", "false");
     }
 
     setSetting("onboarding_completed", "true");
