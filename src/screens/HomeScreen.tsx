@@ -16,8 +16,6 @@ import type { FingerprintInsight } from "../db/signals";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Home">;
 
-// -- 30 Micro goals ---------------------------------------------------------
-
 const MICRO_GOALS = [
   { id: "g1",  text: "Express one specific appreciation to your partner", cat: "appreciation" },
   { id: "g2",  text: "Ask a Yes/No check-in before starting a topic", cat: "connection" },
@@ -56,8 +54,6 @@ function getTodayGoal() {
   return MICRO_GOALS[dayIndex % MICRO_GOALS.length];
 }
 
-// -- 30 Daily tips -----------------------------------------------------------
-
 const DAILY_TIPS = [
   "Ask one question at a time. Fewer questions = lower pressure.",
   "Yes/No questions are easier to answer than open-ended ones.",
@@ -95,8 +91,6 @@ function getDailyTip() {
   const dayIndex = Math.floor(Date.now() / 86_400_000);
   return DAILY_TIPS[dayIndex % DAILY_TIPS.length];
 }
-
-// -- Dashboard ---------------------------------------------------------------
 
 type DashboardData = {
   streak: number;
@@ -140,8 +134,6 @@ function loadDashboard(): DashboardData {
 
   return { streak, totalSessions, pendingReviews, topAction, lessonsCompleted, fingerprint };
 }
-
-// -- Screen ------------------------------------------------------------------
 
 export function HomeScreen({ navigation }: Props) {
   const { colors } = useTheme();
@@ -202,10 +194,10 @@ export function HomeScreen({ navigation }: Props) {
         ))}
       </View>
 
-      {/* Daily Goal Card */}
+      {/* Daily goal card */}
       {!dailyLoop.goalId && !goalAccepted && (
         <View style={[st.goalCard, ls && lsStyles?.accentCard]}>
-          <Text style={st.goalLabel}>TODAY'S MICRO-GOAL</Text>
+          <Text style={st.goalLabel}>Today's micro-goal</Text>
           <Text style={st.goalText}>{todayGoal.text}</Text>
           <View style={st.goalTagRow}>
             <View style={st.goalTag}><Text style={st.goalTagText}>{todayGoal.cat}</Text></View>
@@ -218,7 +210,7 @@ export function HomeScreen({ navigation }: Props) {
       )}
       {(dailyLoop.goalId || goalAccepted) && (
         <View style={st.goalActiveCard}>
-          <Text style={st.goalActiveLabel}>{dailyLoop.checkinDone ? "GOAL COMPLETE" : "GOAL ACTIVE"}</Text>
+          <Text style={st.goalActiveLabel}>{dailyLoop.checkinDone ? "Goal complete" : "Goal in progress"}</Text>
           <Text style={st.goalActiveText}>{todayGoal.text}</Text>
           {showEveningCheckin && (
             <Pressable style={st.checkinBtn} onPress={() => navigation.navigate("EveningCheckIn")}
@@ -242,10 +234,10 @@ export function HomeScreen({ navigation }: Props) {
         </Pressable>
       )}
 
-      {/* Fingerprint / Best action */}
+      {/* Pattern / best action */}
       {data.fingerprint.bestAction && (
         <View style={st.fpCard}>
-          <Text style={st.fpLabel}>YOUR COUPLE PATTERN</Text>
+          <Text style={st.fpLabel}>What seems to work best</Text>
           <Text style={st.fpText}>
             Best: <Text style={{ fontWeight: "800" }}>{ACTIONS[data.fingerprint.bestAction as ActionId]?.title ?? data.fingerprint.bestAction}</Text>
             {data.fingerprint.bestChannel ? ` via ${data.fingerprint.bestChannel}` : ""}
@@ -255,7 +247,7 @@ export function HomeScreen({ navigation }: Props) {
       )}
       {data.topAction && !data.fingerprint.bestAction && (
         <View style={st.insightCard}>
-          <Text style={st.insightLabel}>YOUR BEST ACTION</Text>
+          <Text style={st.insightLabel}>Best action so far</Text>
           <Text style={st.insightVal}>{data.topAction.title}</Text>
           <Text style={st.insightDesc}>{Math.round(data.topAction.avgReward * 100)}% success</Text>
         </View>
