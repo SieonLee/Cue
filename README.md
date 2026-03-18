@@ -343,12 +343,12 @@ npm run web
 
 Representative product screens:
 
-![Onboarding](docs/screenshots/01_onboarding.png)
-![Home](docs/screenshots/02_home.png)
-![Coach](docs/screenshots/03_coach.png)
-![Result](docs/screenshots/05_result.png)
-![History](docs/screenshots/07_history.png)
-![Statistics](docs/screenshots/09_statistics.png)
+![Onboarding](https://raw.githubusercontent.com/SieonLee/Cue/main/docs/screenshots/01_onboarding.png)
+![Home](https://raw.githubusercontent.com/SieonLee/Cue/main/docs/screenshots/02_home.png)
+![Coach](https://raw.githubusercontent.com/SieonLee/Cue/main/docs/screenshots/03_coach.png)
+![Result](https://raw.githubusercontent.com/SieonLee/Cue/main/docs/screenshots/05_result.png)
+![History](https://raw.githubusercontent.com/SieonLee/Cue/main/docs/screenshots/07_history.png)
+![Statistics](https://raw.githubusercontent.com/SieonLee/Cue/main/docs/screenshots/09_statistics.png)
 
 Additional screens captured for documentation:
 
