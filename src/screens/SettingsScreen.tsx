@@ -46,6 +46,8 @@ export function SettingsScreen() {
   function save() {
     setSetting("prefText", String(prefText));
     setSetting("prefYesNo", String(prefYesNo));
+    setSetting("prefersTexting", prefText ? "true" : "false");
+    setSetting("yesNoHelpful", prefYesNo ? "true" : "false");
     const n = Math.max(0, Math.min(72, parseInt(noticeHours || "0", 10) || 0));
     setSetting("noticeHours", String(n));
     setNoticeHours(String(n));
@@ -53,6 +55,7 @@ export function SettingsScreen() {
     setSetting("partnerName", partnerName.trim());
     setSetting("forbiddenPhrases", forbiddenPhrases.trim());
     setSetting("tone", tone);
+    setSetting("scriptTone", tone);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   }
