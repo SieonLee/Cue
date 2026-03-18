@@ -1,11 +1,3 @@
-/**
- * ReplayScreen — Conversation Action Detection
- *
- * Paste a conversation → see which communication actions were used per turn.
- * NO grading, NO emotion diagnosis, NO "healthy/unhealthy" labels.
- * Only shows: which actions match each turn + urgency/pause signal count.
- */
-
 import React, { useState } from "react";
 import { View, Text, TextInput, Pressable, StyleSheet, ScrollView } from "react-native";
 import { parseConversation, type Turn } from "../nlp/sentiment";
