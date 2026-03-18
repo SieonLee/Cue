@@ -162,7 +162,7 @@ export function OnboardingScreen({ navigation }: Props) {
           </Text>
 
           <Pressable style={styles.primaryBtn} onPress={() => setPhase("questions")}>
-            <Text style={styles.primaryBtnText}>Start (takes ~1 minute)</Text>
+            <Text style={styles.primaryBtnText}>Start setup</Text>
           </Pressable>
 
           <Pressable style={styles.skipBtn} onPress={() => { setSetting("onboarding_completed", "true"); navigation.replace("Home"); }}>
@@ -210,8 +210,8 @@ export function OnboardingScreen({ navigation }: Props) {
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.title}>You're all set</Text>
         <Text style={styles.subtitle}>
-          Your preferences have been saved. The app will personalize
-          recommendations based on your communication style.
+          Your preferences are saved. Cue will use them to shape recommendations
+          and script tone.
         </Text>
 
         <View style={styles.card}>
