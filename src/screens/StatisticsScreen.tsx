@@ -106,8 +106,8 @@ export function StatisticsScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Learning Statistics</Text>
-      <Text style={styles.subtitle}>How the coaching model is learning from your feedback.</Text>
+      <Text style={styles.title}>Stats</Text>
+      <Text style={styles.subtitle}>A quick look at sessions, feedback, and which actions have worked best so far.</Text>
 
       {/* Summary stats */}
       <View style={styles.statsRow}>
@@ -127,7 +127,7 @@ export function StatisticsScreen() {
 
       {/* 7-day vs All-time */}
       <View style={styles.card}>
-        <Text style={styles.cardLabel}>TREND</Text>
+        <Text style={styles.cardLabel}>Recent activity</Text>
         <View style={styles.trendRow}>
           <View style={styles.trendItem}>
             <Text style={styles.trendValue}>{data.last7Sessions}</Text>
@@ -147,7 +147,7 @@ export function StatisticsScreen() {
       {/* Reward distribution */}
       {totalFb > 0 && (
         <View style={styles.card}>
-          <Text style={styles.cardLabel}>FEEDBACK DISTRIBUTION</Text>
+          <Text style={styles.cardLabel}>Feedback mix</Text>
           {([
             { label: "Good", count: data.rewardDistribution.good, color: colors.teal },
             { label: "Okay", count: data.rewardDistribution.okay, color: colors.orange },
@@ -167,7 +167,7 @@ export function StatisticsScreen() {
       {/* Action performance */}
       {data.actionStats.length > 0 && (
         <View style={styles.card}>
-          <Text style={styles.cardLabel}>ACTION PERFORMANCE</Text>
+          <Text style={styles.cardLabel}>Action results</Text>
           {data.actionStats.slice(0, 10).map((a) => (
             <View key={a.action} style={styles.actionRow}>
               <View style={{ flex: 1 }}>
@@ -185,8 +185,8 @@ export function StatisticsScreen() {
 
       {data.totalFeedback === 0 && (
         <View style={styles.emptyCard}>
-          <Text style={styles.emptyText}>No feedback data yet</Text>
-          <Text style={styles.emptySubtext}>Complete coaching sessions and provide feedback to see statistics here.</Text>
+          <Text style={styles.emptyText}>No stats yet</Text>
+          <Text style={styles.emptySubtext}>Finish a session and leave feedback to start filling this in.</Text>
         </View>
       )}
     </ScrollView>
