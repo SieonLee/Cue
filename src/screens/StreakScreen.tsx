@@ -1,24 +1,9 @@
-/**
- * StreakScreen — Engagement & Streak Dashboard
- *
- * Tracks daily app usage streaks, weekly goals, and achievement badges.
- * Engagement data is stored in daily_engagement and badges tables.
- *
- * Features:
- * - Current streak + longest streak display
- * - Weekly goal progress (3 sessions/week target)
- * - Activity heatmap (last 28 days)
- * - Achievement badges with unlock conditions
- */
-
 import React, { useCallback, useState } from "react";
 import {
   View, Text, StyleSheet, ScrollView, Pressable,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { db } from "../db/db";
-
-// ── Badge definitions ────────────────────────────────────────────────────────
 
 type BadgeDef = {
   id: string;
@@ -81,8 +66,6 @@ const BADGE_DEFS: BadgeDef[] = [
   { id: "streak_30", emoji: "🌟", title: "Monthly Champion", desc: "Maintain a 30-day streak", check: () => false },
 ];
 
-// ── Streak calculation ───────────────────────────────────────────────────────
-
 type DayActivity = { dateKey: string; active: boolean };
 
 function getDateKey(date: Date): string {
@@ -100,10 +83,8 @@ function recordTodayEngagement() {
 }
 
 function computeStreaks(): { current: number; longest: number; last28: DayActivity[] } {
-  // Get all active days
   type Row = { date_key: string };
 
-  // Also check feedback/sessions/reviews for activity
   const feedbackDays = db.getAllSync<{ dk: string }>(
     `SELECT DISTINCT date(created_at / 1000, 'unixepoch') as dk FROM feedback ORDER BY dk`
   );
