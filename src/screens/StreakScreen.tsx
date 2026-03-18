@@ -166,8 +166,6 @@ function getWeekSessionCount(): number {
   return row?.cnt ?? 0;
 }
 
-// ── Main Component ───────────────────────────────────────────────────────────
-
 const WEEKLY_GOAL = 3;
 
 export function StreakScreen() {
@@ -184,7 +182,6 @@ export function StreakScreen() {
       setStreaks(s);
       setWeekSessions(getWeekSessionCount());
 
-      // Check and award badges
       const earned = new Set<string>();
       const justEarned: string[] = [];
 
@@ -312,8 +309,6 @@ export function StreakScreen() {
     </ScrollView>
   );
 }
-
-// ── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   container: { flexGrow: 1, padding: 18, gap: 14, paddingBottom: 32 },
