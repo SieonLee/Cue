@@ -137,18 +137,18 @@ function formatDate(ts: number): string {
 export function WhatIfScreen() {
   const [sessions, setSessions] = useState<SessionWithOutcome[]>([]);
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
-  const [analysis, setAnalysis] = useState<WhatIfAnalysis | null>(null);
+  const [comparison, setComparison] = useState<WhatIfAnalysis | null>(null);
 
   useFocusEffect(useCallback(() => {
     const loaded = loadBadSessions();
     setSessions(loaded);
     setSelectedIdx(null);
-    setAnalysis(null);
+    setComparison(null);
   }, []));
 
   const handleSelect = (idx: number) => {
     setSelectedIdx(idx);
-    setAnalysis(computeCounterfactual(sessions[idx]));
+    setComparison(computeCounterfactual(sessions[idx]));
   };
 
   return (
@@ -194,29 +194,29 @@ export function WhatIfScreen() {
       )}
 
       {/* Counterfactual Analysis */}
-      {analysis && (
+      {comparison && (
         <View style={styles.analysisSection}>
           {/* What you chose */}
           <View style={styles.chosenCard}>
             <Text style={styles.sectionLabel}>Chosen action</Text>
             <View style={styles.chosenRow}>
               <View style={{ flex: 1 }}>
-                <Text style={styles.chosenAction}>{ACTIONS[analysis.session.chosenAction]?.title}</Text>
-                <Text style={styles.chosenDesc}>{ACTIONS[analysis.session.chosenAction]?.description}</Text>
+                <Text style={styles.chosenAction}>{ACTIONS[comparison.session.chosenAction]?.title}</Text>
+                <Text style={styles.chosenDesc}>{ACTIONS[comparison.session.chosenAction]?.description}</Text>
               </View>
               <View style={styles.chosenStats}>
-                <Text style={[styles.chosenReward, { color: rewardColor(analysis.session.reward) }]}>
-                  {rewardLabel(analysis.session.reward)}
+                <Text style={[styles.chosenReward, { color: rewardColor(comparison.session.reward) }]}>
+                  {rewardLabel(comparison.session.reward)}
                 </Text>
                 <Text style={styles.chosenEstimate}>
-                  Model estimate {Math.round(analysis.chosenEstimate * 100)}%
+                  Model estimate {Math.round(comparison.chosenEstimate * 100)}%
                 </Text>
               </View>
             </View>
-            {analysis.session.emotionBefore !== undefined && (
+            {comparison.session.emotionBefore !== undefined && (
               <Text style={styles.emotionShift}>
-                Emotion: {analysis.session.emotionBefore} {">"} {analysis.session.emotionAfter}
-                {(analysis.session.emotionAfter ?? 0) > (analysis.session.emotionBefore ?? 0) ? " (improved)" : " (worsened)"}
+                Emotion: {comparison.session.emotionBefore} {">"} {comparison.session.emotionAfter}
+                {(comparison.session.emotionAfter ?? 0) > (comparison.session.emotionBefore ?? 0) ? " (improved)" : " (worsened)"}
               </Text>
             )}
           </View>
@@ -224,7 +224,7 @@ export function WhatIfScreen() {
           {/* Alternatives */}
           <View style={styles.card}>
             <Text style={styles.sectionLabel}>Other options</Text>
-            {analysis.alternatives.map((alt) => (
+            {comparison.alternatives.map((alt) => (
               <View key={alt.actionId} style={styles.altRow}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.altTitle}>{alt.title}</Text>
@@ -252,14 +252,14 @@ export function WhatIfScreen() {
             <Text style={styles.sectionLabel}>Estimated gap</Text>
             <View style={styles.regretRow}>
               <Text style={[styles.regretValue, {
-                color: analysis.regret > 0.3 ? "#e76f51" : analysis.regret > 0.1 ? "#e9c46a" : "#2a9d8f",
+                color: comparison.regret > 0.3 ? "#e76f51" : comparison.regret > 0.1 ? "#e9c46a" : "#2a9d8f",
               }]}>
-                {Math.round(analysis.regret * 100)}%
+                {Math.round(comparison.regret * 100)}%
               </Text>
               <Text style={styles.regretDesc}>
-                {analysis.regret > 0.3
+                {comparison.regret > 0.3
                   ? "High regret — a different action likely would have helped more."
-                  : analysis.regret > 0.1
+                  : comparison.regret > 0.1
                   ? "Moderate regret — there was a slightly better option."
                   : "Low regret — your choice was close to optimal."}
               </Text>
@@ -269,7 +269,7 @@ export function WhatIfScreen() {
           {/* Insight */}
           <View style={styles.insightCard}>
             <Text style={styles.sectionLabel}>Takeaway</Text>
-            <Text style={styles.insightText}>{analysis.insight}</Text>
+            <Text style={styles.insightText}>{comparison.insight}</Text>
           </View>
         </View>
       )}
