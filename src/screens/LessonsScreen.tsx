@@ -1,18 +1,3 @@
-/**
- * LessonsScreen — Guided Learning Modules
- *
- * Structured micro-lessons on evidence-based couple communication techniques.
- * Each lesson follows a 4-step flow:
- *   1. Concept — explanation of the technique
- *   2. Example — real scenario demonstrating the technique
- *   3. Practice — interactive exercise (choose the better response)
- *   4. Takeaway — key insight + mark complete
- *
- * Lessons are grouped into modules (Foundations, De-escalation, Connection).
- * Progress is stored in the lesson_progress table.
- * Completed lessons unlock the next in sequence.
- */
-
 import React, { useCallback, useState } from "react";
 import {
   View, Text, Pressable, StyleSheet, ScrollView,
@@ -23,8 +8,6 @@ import type { RootStackParamList } from "../navigation/AppNavigator";
 import { db } from "../db/db";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Lessons">;
-
-// ── Lesson data ─────────────────────────────────────────────────────────────
 
 type PracticeOption = { text: string; correct: boolean; explanation: string };
 
@@ -40,7 +23,6 @@ type Lesson = {
 };
 
 const LESSONS: Lesson[] = [
-  // ── Module 1: Foundations ──────────────────────────────────────────────
   {
     id: "L01", module: "Foundations",
     title: "The Check-In",
@@ -104,7 +86,6 @@ const LESSONS: Lesson[] = [
     takeaway: "The formula: [What they did] + [How it made you feel]. 'You [action] — that made me feel [emotion].'",
     relatedAction: "A8",
   },
-  // ── Module 2: De-escalation ───────────────────────────────────────────
   {
     id: "L04", module: "De-escalation",
     title: "The Strategic Timeout",
