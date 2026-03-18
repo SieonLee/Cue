@@ -1,19 +1,3 @@
-/**
- * WeeklyReportScreen — Weekly Engagement Summary
- *
- * Generates an end-of-week summary combining data from feedback,
- * outcome_reviews, and coach_sessions tables.
- *
- * Sections:
- * - Week overview: sessions, reviews, avg reward
- * - Most-used action + its success rate
- * - Week-over-week comparison
- * - One action-focused observation
- *
- * NO emotion interpretation. NO therapeutic advice.
- * ONLY factual session data and action usage stats.
- */
-
 import React, { useCallback, useState } from "react";
 import {
   View, Text, StyleSheet, ScrollView,
@@ -22,8 +6,6 @@ import { useFocusEffect } from "@react-navigation/native";
 import { db } from "../db/db";
 import { ACTIONS } from "../coach/actions";
 import type { ActionId } from "../coach/actions";
-
-// ── Data types ──────────────────────────────────────────────────────────────
 
 type WeekData = {
   sessions: number;
@@ -35,8 +17,6 @@ type WeekData = {
   activeDays: number;
   observation: string;
 };
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
 
 function getWeekBounds(weeksAgo: number): { start: number; end: number } {
   const now = new Date();
@@ -54,28 +34,24 @@ function computeWeekData(): WeekData {
   const thisWeek = getWeekBounds(0);
   const lastWeek = getWeekBounds(1);
 
-  // This week sessions
   const sessionRow = db.getFirstSync<{ cnt: number }>(
     "SELECT COUNT(*) as cnt FROM feedback WHERE created_at >= ? AND created_at < ?",
     [thisWeek.start, thisWeek.end]
   );
   const sessions = sessionRow?.cnt ?? 0;
 
-  // This week reviews
   const reviewRow = db.getFirstSync<{ cnt: number }>(
     "SELECT COUNT(*) as cnt FROM outcome_reviews WHERE created_at >= ? AND created_at < ?",
     [thisWeek.start, thisWeek.end]
   );
   const reviews = reviewRow?.cnt ?? 0;
 
-  // This week avg reward
   const rewardRow = db.getFirstSync<{ avg_r: number | null }>(
     "SELECT AVG(reward) as avg_r FROM feedback WHERE created_at >= ? AND created_at < ?",
     [thisWeek.start, thisWeek.end]
   );
   const avgReward = rewardRow?.avg_r ?? 0;
 
-  // Top action this week
   type ActionRow = { chosen_action: string; cnt: number; avg_r: number };
   const topActions = db.getAllSync<ActionRow>(
     `SELECT chosen_action, COUNT(*) as cnt, AVG(reward) as avg_r
@@ -87,7 +63,6 @@ function computeWeekData(): WeekData {
     ? { id: topActions[0].chosen_action, count: topActions[0].cnt, avgReward: topActions[0].avg_r }
     : null;
 
-  // Last week comparison
   const prevSessionRow = db.getFirstSync<{ cnt: number }>(
     "SELECT COUNT(*) as cnt FROM feedback WHERE created_at >= ? AND created_at < ?",
     [lastWeek.start, lastWeek.end]
@@ -100,7 +75,6 @@ function computeWeekData(): WeekData {
   );
   const prevAvgReward = prevRewardRow?.avg_r ?? 0;
 
-  // Active days this week
   const activeDayRow = db.getFirstSync<{ cnt: number }>(
     `SELECT COUNT(DISTINCT date(created_at / 1000, 'unixepoch')) as cnt
      FROM feedback WHERE created_at >= ? AND created_at < ?`,
@@ -108,7 +82,6 @@ function computeWeekData(): WeekData {
   );
   const activeDays = activeDayRow?.cnt ?? 0;
 
-  // Generate observation
   const observation = generateObservation(sessions, avgReward, reviews, activeDays);
 
   return {
@@ -149,13 +122,10 @@ function formatDelta(current: number, previous: number): { text: string; positiv
   return { text: "Same", positive: true };
 }
 
-// Use canonical action labels from actions.ts (no more mismatch)
 function getActionLabel(id: string): string {
   const action = ACTIONS[id as ActionId];
   return action?.title ?? id;
 }
-
-// ── Component ────────────────────────────────────────────────────────────────
 
 export function WeeklyReportScreen() {
   const [data, setData] = useState<WeekData | null>(null);
@@ -238,8 +208,6 @@ export function WeeklyReportScreen() {
     </ScrollView>
   );
 }
-
-// ── Styles ──────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   container: { flexGrow: 1, padding: 18, gap: 14, paddingBottom: 32 },
