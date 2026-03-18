@@ -15,7 +15,6 @@ const TOOLS: { id: ToolId; emoji: string; title: string; subtitle: string }[] = 
   { id: "timeout",      emoji: "⏱️", title: "Start timer",    subtitle: "Go to timeout timer screen" },
 ];
 
-// ── Breathing Tool ──────────────────────────────────────────────────────────
 const BREATH_PHASES: { label: string; duration: number }[] = [
   { label: "Breathe in", duration: 4 },
   { label: "Hold",       duration: 4 },
@@ -82,7 +81,6 @@ const bt = StyleSheet.create({
   btnSecondaryText: { fontWeight: "600" },
 });
 
-// ── Grounding Tool ──────────────────────────────────────────────────────────
 const GROUND_STEPS = [
   { n: 5, sense: "see",   prompt: "Name 5 things you can see right now." },
   { n: 4, sense: "touch", prompt: "Name 4 things you can physically feel (chair, floor, air…)." },
@@ -128,7 +126,6 @@ const gr = StyleSheet.create({
   btnText: { color: "white", fontWeight: "700" },
 });
 
-// ── Pause Script ────────────────────────────────────────────────────────────
 import * as Clipboard from "expo-clipboard";
 
 const PAUSE_SCRIPTS = [
@@ -166,7 +163,6 @@ const ps = StyleSheet.create({
   copyLabel: { fontSize: 12, fontWeight: "700", opacity: 0.5, alignSelf: "flex-end" },
 });
 
-// ── Main Screen ─────────────────────────────────────────────────────────────
 export function EmergencyScreen({ navigation }: Props) {
   const { lowSensory } = useSensory();
   const [activeTool, setActiveTool] = useState<ToolId | null>(null);
