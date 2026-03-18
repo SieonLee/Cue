@@ -1,12 +1,3 @@
-/**
- * GoalsScreen – Micro Goals (Finch-inspired)
- * ──────────────────────────────────────────
- * • Small, completable relationship goals
- * • No punishment for incomplete goals — just gentle nudges
- * • Celebrates completion with emoji confetti
- * • Goals are scoped to active profile (A / B) or shared
- */
-
 import React, { useCallback, useState } from "react";
 import {
   View,
@@ -23,8 +14,6 @@ import { useFocusEffect } from "@react-navigation/native";
 import * as SQLite from "expo-sqlite";
 import { useSensory } from "../context/SensoryContext";
 import { useProfile } from "../context/ProfileContext";
-
-// ─── DB helpers ─────────────────────────────────────────────────────────────
 
 const DB_NAME = "couple_coach.db";
 
@@ -79,8 +68,6 @@ async function deleteGoal(id: number): Promise<void> {
   await db.runAsync(`DELETE FROM goals WHERE id = ?`, [id]);
 }
 
-// ─── Preset micro-goal suggestions ──────────────────────────────────────────
-
 const PRESET_GOALS = [
   "Say one specific appreciation today",
   "Use a gentle tone in our next disagreement",
@@ -92,8 +79,6 @@ const PRESET_GOALS = [
   "End tonight with a positive comment",
 ];
 
-// ─── Component ───────────────────────────────────────────────────────────────
-
 export default function GoalsScreen() {
   const { lowSensory } = useSensory();
   const { activeProfile } = useProfile();
@@ -103,7 +88,6 @@ export default function GoalsScreen() {
   const [showPresets, setShowPresets] = useState(false);
   const [recentCelebration, setRecentCelebration] = useState<number | null>(null);
 
-  // ── Load goals on focus ─────────────────────────────────────────────────
   useFocusEffect(
     useCallback(() => {
       refresh();
@@ -115,7 +99,6 @@ export default function GoalsScreen() {
     setGoals(rows);
   }
 
-  // ── Add ─────────────────────────────────────────────────────────────────
   async function handleAdd(text: string = newText) {
     const trimmed = text.trim();
     if (!trimmed) return;
@@ -125,7 +108,6 @@ export default function GoalsScreen() {
     await refresh();
   }
 
-  // ── Complete / uncomplete ────────────────────────────────────────────────
   async function handleToggle(goal: GoalRow) {
     if (goal.completed === 0) {
       await completeGoal(goal.id);
@@ -137,7 +119,6 @@ export default function GoalsScreen() {
     await refresh();
   }
 
-  // ── Delete ───────────────────────────────────────────────────────────────
   function handleDelete(goal: GoalRow) {
     Alert.alert("Remove goal?", `"${goal.text}"`, [
       { text: "Cancel", style: "cancel" },
@@ -152,7 +133,6 @@ export default function GoalsScreen() {
     ]);
   }
 
-  // ── Render goal item ─────────────────────────────────────────────────────
   function renderGoal({ item }: { item: GoalRow }) {
     const done = item.completed === 1;
     const celebrating = recentCelebration === item.id;
@@ -188,12 +168,10 @@ export default function GoalsScreen() {
     );
   }
 
-  // ── Stats ────────────────────────────────────────────────────────────────
   const total = goals.length;
   const done = goals.filter((g) => g.completed === 1).length;
   const pct = total > 0 ? Math.round((done / total) * 100) : 0;
 
-  // ── Render ───────────────────────────────────────────────────────────────
   return (
     <KeyboardAvoidingView
       style={[styles.container, lowSensory && styles.lowSensory]}
@@ -212,7 +190,7 @@ export default function GoalsScreen() {
         </View>
       )}
 
-      {/* Gentle nudge — not a punishment */}
+      {/* Keep the tone light if something is still unfinished. */}
       {total > 0 && done < total && (
         <Text style={styles.nudge}>
           ✨ No rush — small steps count.
@@ -275,8 +253,6 @@ export default function GoalsScreen() {
     </KeyboardAvoidingView>
   );
 }
-
-// ─── Styles ──────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff", padding: 20 },
