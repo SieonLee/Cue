@@ -26,10 +26,6 @@ function rewardValue(label: RewardLabel): number {
   return 0.0;
 }
 
-/* =========================
-   Action Script Logic (Templates)
-   ========================= */
-
 type ScriptPack = {
   messages: { id: string; label: "Short" | "Gentle" | "Structured"; text: string }[];
   checkIn?: string;
@@ -435,23 +431,18 @@ function buildScript(action: ActionId, ctx: CoachContext, prefs: Personalization
   }
 }
 
-let _currentSessionId: string | null = null;
+let currentSessionId: string | null = null;
 
 async function copyToClipboard(text: string) {
   await Clipboard.setStringAsync(text);
-  // Track implicit signal: user copied a script
-  if (_currentSessionId) recordSignal(_currentSessionId, "copy");
+  if (currentSessionId) recordSignal(currentSessionId, "copy");
 }
-
-/* =========================
-   Screen Component
-   ========================= */
 
 export function ResultScreen({ route, navigation }: Props) {
   const { colors } = useTheme();
   const { ls, lsStyles } = useSensoryStyles();
   const { sessionId } = route.params;
-  _currentSessionId = sessionId;
+  currentSessionId = sessionId;
   const [chosen, setChosen] = useState<ActionId | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [feedbackLabel, setFeedbackLabel] = useState<RewardLabel | null>(null);
@@ -481,12 +472,11 @@ export function ResultScreen({ route, navigation }: Props) {
     const ctx = JSON.parse(row.context_json) as CoachContext;
     const ranked = JSON.parse(row.ranked_json) as ActionId[];
 
-    // Compute Bayesian scores for display
     const params = loadBanditParams();
     let scores: ActionScore[] = [];
     try {
       scores = rankActionsWithScores(ctx, ranked, params);
-    } catch { /* fallback: empty scores */ }
+    } catch {}
 
     return { ctx, ranked, scores };
   }, [sessionId]);
@@ -533,8 +523,8 @@ export function ResultScreen({ route, navigation }: Props) {
     <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
       <Text style={styles.title}>Recommended next action</Text>
       <Text style={styles.subtitle}>
-        These are the candidate actions ranked with Thompson Sampling. Select one, then use the
-        script below.
+        These options are ranked from your current context and past feedback.
+        Pick one, then use the draft below as a starting point.
       </Text>
 
       <View style={[styles.card, ls && lsStyles?.card]}>
@@ -566,8 +556,8 @@ export function ResultScreen({ route, navigation }: Props) {
                 {a.description}
               </Text>
               {active && score && score.pulls > 0 && (
-                <View style={styles.bayesBox}>
-                  <Text style={styles.bayesLabel}>BAYESIAN ANALYSIS</Text>
+                  <View style={styles.bayesBox}>
+                  <Text style={styles.bayesLabel}>Model details</Text>
                   <View style={styles.bayesRow}>
                     <View style={styles.bayesStat}>
                       <Text style={styles.bayesValue}>{Math.round(score.mean * 100)}%</Text>
@@ -679,7 +669,7 @@ export function ResultScreen({ route, navigation }: Props) {
         {submitted ? (
           <View style={styles.feedbackDone}>
             <Text style={styles.feedbackDoneText}>
-              Saved \u2014 {feedbackLabel}. The ranking will improve over time.
+              Saved — {feedbackLabel}. Cue will use this the next time it ranks actions.
             </Text>
             <Pressable
               style={styles.resetBtn}
@@ -712,10 +702,6 @@ export function ResultScreen({ route, navigation }: Props) {
     </ScrollView>
   );
 }
-
-/* =========================
-   Editable Script Component
-   ========================= */
 
 function EditableScript({ label, initialText, examples }: { label: string; initialText: string; examples?: string[] }) {
   const { colors } = useTheme();
