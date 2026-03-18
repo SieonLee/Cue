@@ -191,8 +191,6 @@ function generateObservations(
   return observations;
 }
 
-// ── Visualization components ─────────────────────────────────────────────────
-
 function HorizontalBar({ value, maxValue, color }: { value: number; maxValue: number; color: string }) {
   const pct = maxValue > 0 ? Math.round((value / maxValue) * 100) : 0;
   return (
@@ -247,11 +245,7 @@ function rewardToColor(avg: number): string {
   return "#e63946";
 }
 
-// ── Tab type ─────────────────────────────────────────────────────────────────
-
 type Tab = "observations" | "actions" | "trends";
-
-// ── Main screen ──────────────────────────────────────────────────────────────
 
 export function PatternScreen() {
   const [tab, setTab] = useState<Tab>("observations");
@@ -477,8 +471,6 @@ export function PatternScreen() {
     </ScrollView>
   );
 }
-
-// ── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   container: { flexGrow: 1, padding: 18, gap: 12, paddingBottom: 32 },
