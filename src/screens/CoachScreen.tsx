@@ -4,7 +4,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/AppNavigator";
 import type { Channel, CoachContext, Intent, Stage, Tone } from "../types/models";
-import { getSetting, loadBanditParams } from "../db/sessions";
+import { getSetting, loadBanditParams, loadLinUCBBanditParams } from "../db/sessions";
 import { ruleCandidates } from "../coach/recommend";
 import { rankActionsTS } from "../bandit/thompson";
 import { rankActionsLinUCB, loadLinUCBParams } from "../bandit/linucb";
@@ -99,7 +99,7 @@ export function CoachScreen({ navigation }: Props) {
     let ranked: string[];
 
     if (algo === "linucb") {
-      const linParams = loadLinUCBParams(null, ALL_ACTION_IDS);
+      const linParams = loadLinUCBParams(loadLinUCBBanditParams(), ALL_ACTION_IDS);
       ranked = rankActionsLinUCB(ctx, candidates, linParams);
     } else {
       const params = loadBanditParams();
