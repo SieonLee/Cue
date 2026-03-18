@@ -1,27 +1,9 @@
-/**
- * PatternScreen — Action & Session Data Dashboard
- *
- * Aggregates coaching sessions and feedback to surface
- * factual data about action usage:
- *
- * 1. Action Effectiveness: Success rate per action, broken down by context
- * 2. Channel Analysis: Which communication channels correlate with better outcomes
- * 3. Time Patterns: Day-of-week trends
- * 4. Reward Trend: Weekly outcome averages
- * 5. Top Observations: Auto-generated plain-language data summaries
- *
- * NO psychological interpretation. NO partner analysis.
- * ONLY action usage data and outcome statistics.
- */
-
 import React, { useCallback, useState } from "react";
 import { View, Text, StyleSheet, ScrollView, Pressable } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { db } from "../db/db";
 import { ACTIONS } from "../coach/actions";
 import type { ActionId } from "../coach/actions";
-
-// ── Types ────────────────────────────────────────────────────────────────────
 
 type ActionEffectiveness = {
   actionId: ActionId;
@@ -50,8 +32,6 @@ type Observation = {
   type: "positive" | "neutral" | "warning";
 };
 
-// ── Data loaders ─────────────────────────────────────────────────────────────
-
 function loadActionEffectiveness(): ActionEffectiveness[] {
   type Row = {
     chosen_action: string;
@@ -60,7 +40,6 @@ function loadActionEffectiveness(): ActionEffectiveness[] {
     would_use_pct: number;
   };
 
-  // Join feedback with outcome_reviews for richer stats
   const rows = db.getAllSync<Row>(
     `SELECT
        f.chosen_action,
@@ -78,7 +57,6 @@ function loadActionEffectiveness(): ActionEffectiveness[] {
 
   return rows.map((r) => {
     const actionId = r.chosen_action as ActionId;
-    // Find most common context
     const ctxRow = db.getFirstSync<{ intent: string }>(
       `SELECT json_extract(s.context_json, '$.intent') as intent
        FROM feedback f
