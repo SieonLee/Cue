@@ -52,7 +52,6 @@ export function AsyncScreen({ route }: Props) {
   const [predA, setPredA] = useState(""); // A predicts B's answer
   const [predB, setPredB] = useState(""); // B predicts A's answer
 
-  // Load or create session for today's card
   useFocusEffect(
     useCallback(() => {
       const existing = db.getFirstSync<AsyncRow>(
@@ -65,7 +64,6 @@ export function AsyncScreen({ route }: Props) {
         setInputB(existing.profile_b_answer ?? "");
         setPredA(existing.a_prediction ?? "");
         setPredB(existing.b_prediction ?? "");
-        // Determine step from saved state
         if (existing.completed_at) setStep("reveal");
         else if (existing.profile_b_answer) setStep("predict_b");
         else if (existing.a_prediction) setStep("answer_b");
@@ -166,7 +164,7 @@ export function AsyncScreen({ route }: Props) {
       {step === "predict_a" && (
         <View style={styles.inputSection}>
           <Text style={styles.inputLabel}>
-            Before seeing {partnerName}'s answer — what do you think they said?
+            Before you see {partnerName}'s answer, what do you think they wrote?
           </Text>
           <TextInput
             style={styles.textInput}
@@ -205,7 +203,7 @@ export function AsyncScreen({ route }: Props) {
       {step === "predict_b" && (
         <View style={styles.inputSection}>
           <Text style={styles.inputLabel}>
-            {partnerName}, what do you think {myName} said?
+            {partnerName}, what do you think {myName} wrote?
           </Text>
           <TextInput
             style={styles.textInput}
