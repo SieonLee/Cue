@@ -1,27 +1,9 @@
-/**
- * MilestoneScreen — Relationship Progress Milestones
- *
- * Tracks meaningful relationship communication milestones with a
- * timeline visualization. Milestones are auto-detected from existing
- * data (feedback, outcome_reviews, coach_sessions, lesson_progress, badges).
- *
- * Categories:
- * - Communication: first session, first positive outcome, etc.
- * - Growth: learning milestones, action diversity, etc.
- * - Consistency: streak milestones, engagement patterns, etc.
- * - Emotional: emotion improvement trends, positive ratio, etc.
- *
- * Each milestone shows when it was achieved (or progress toward it).
- */
-
 import React, { useCallback, useState } from "react";
 import {
   View, Text, StyleSheet, ScrollView,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { db } from "../db/db";
-
-// ── Milestone types ─────────────────────────────────────────────────────────
 
 type MilestoneCategory = "communication" | "growth" | "consistency" | "emotional";
 
@@ -46,8 +28,6 @@ type MilestoneState = {
   progressLabel: string;
 };
 
-// ── Queries ─────────────────────────────────────────────────────────────────
-
 function countQuery(sql: string, params: any[] = []): number {
   const row = db.getFirstSync<{ cnt: number }>(sql, params);
   return row?.cnt ?? 0;
@@ -63,10 +43,7 @@ function avgQuery(sql: string, params: any[] = []): number {
   return row?.avg_val ?? 0;
 }
 
-// ── Milestone definitions ───────────────────────────────────────────────────
-
 const MILESTONES: MilestoneDef[] = [
-  // ── Communication ─────────────────────────────────────────────────────
   {
     id: "first_session", category: "communication", emoji: "\uD83C\uDFAF",
     title: "First Conversation",
@@ -256,8 +233,6 @@ const CATEGORY_META: Record<MilestoneCategory, { label: string; color: string }>
   emotional: { label: "Emotional", color: "#e76f51" },
 };
 
-// ── Component ───────────────────────────────────────────────────────────────
-
 export function MilestoneScreen() {
   const [milestones, setMilestones] = useState<MilestoneState[]>([]);
 
@@ -278,10 +253,8 @@ export function MilestoneScreen() {
   const achieved = milestones.filter((m) => m.achieved);
   const upcoming = milestones.filter((m) => !m.achieved);
 
-  // Sort achieved by achievedAt (most recent first)
   achieved.sort((a, b) => (b.achievedAt ?? 0) - (a.achievedAt ?? 0));
 
-  // Sort upcoming by progress (closest to completing first)
   upcoming.sort((a, b) => b.progress - a.progress);
 
   function formatDate(ts?: number): string {
@@ -405,8 +378,6 @@ export function MilestoneScreen() {
     </ScrollView>
   );
 }
-
-// ── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   container: { flexGrow: 1, padding: 18, gap: 14, paddingBottom: 32 },
