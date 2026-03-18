@@ -117,17 +117,17 @@ export function ModelHistoryScreen() {
       <View style={styles.summaryRow}>
         <View style={styles.summaryBox}>
           <Text style={styles.summaryValue}>{data.timelines.length}</Text>
-          <Text style={styles.summaryLabel}>actions tracked</Text>
+          <Text style={styles.summaryLabel}>actions</Text>
         </View>
         <View style={styles.summaryBox}>
           <Text style={styles.summaryValue}>{data.snapshots.length}</Text>
-          <Text style={styles.summaryLabel}>weeks of data</Text>
+          <Text style={styles.summaryLabel}>weeks saved</Text>
         </View>
         <View style={styles.summaryBox}>
           <Text style={[styles.summaryValue, { color: "#2a9d8f" }]}>
             {data.timelines.filter((t) => t.trend === "improving").length}
           </Text>
-          <Text style={styles.summaryLabel}>improving</Text>
+          <Text style={styles.summaryLabel}>trending up</Text>
         </View>
       </View>
 
@@ -137,7 +137,7 @@ export function ModelHistoryScreen() {
             <View style={{ flex: 1 }}>
               <Text style={styles.actionTitle}>{t.title}</Text>
               <Text style={styles.actionMeta}>
-                Current: {Math.round(t.currentMean * 100)}% avg outcome
+                Current avg outcome: {Math.round(t.currentMean * 100)}%
               </Text>
             </View>
             <Text style={[styles.trendBadge, { color: trendColor(t.trend) }]}>
@@ -171,10 +171,8 @@ export function ModelHistoryScreen() {
       <View style={styles.methodBox}>
         <Text style={styles.methodLabel}>Method</Text>
         <Text style={styles.methodText}>
-          Weekly snapshots capture aggregated Beta(α, β) parameters per action.
-          Posterior mean = α/(α+β). CI width = Q95 - Q05 of Beta distribution.
-          Trend detection: compares first-half vs second-half mean (threshold: ±5pp).
-          Convergence = narrowing CI → model gaining certainty about action effectiveness.
+          Each week stores the running Beta parameters for every action.
+          The chart shows how the average estimate and uncertainty change over time.
         </Text>
       </View>
     </ScrollView>
