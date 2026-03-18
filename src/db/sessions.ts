@@ -31,8 +31,22 @@ export function saveBanditParams(params: Record<string, any>) {
   );
 }
 
+export function loadLinUCBBanditParams(): Record<string, any> {
+  const row = db.getFirstSync<{ value_json: string }>(
+    "SELECT value_json FROM bandit_params WHERE key = 'linucb_params'"
+  );
+  return row ? JSON.parse(row.value_json) : {};
+}
+
+export function saveLinUCBBanditParams(params: Record<string, any>) {
+  db.runSync(
+    "INSERT INTO bandit_params(key, value_json) VALUES('linucb_params', ?) ON CONFLICT(key) DO UPDATE SET value_json = excluded.value_json",
+    [JSON.stringify(params)]
+  );
+}
+
 export function resetBanditParams() {
-  db.runSync("DELETE FROM bandit_params WHERE key = 'params'");
+  db.runSync("DELETE FROM bandit_params WHERE key IN ('params', 'linucb_params')");
 }
 
 // Export: returns JSON string (no raw message content — context tags only)
