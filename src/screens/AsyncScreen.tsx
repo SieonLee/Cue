@@ -1,17 +1,3 @@
-/**
- * AsyncScreen — Paired-style async partner mode
- *
- * Flow:
- * 1. Show card question (navigated from DailyCard)
- * 2. Profile A answers first (partner's answer hidden)
- * 3. Option: "What do you think they said?" prediction game
- * 4. Profile B answers
- * 5. Reveal both answers + prediction results
- *
- * Answers are stored in SQLite async_sessions (raw text — user-entered content)
- * Sensitive data note: Data from this screen is excluded from exports
- */
-
 import React, { useCallback, useMemo, useState } from "react";
 import {
   View, Text, Pressable, StyleSheet, ScrollView, TextInput, Alert,
