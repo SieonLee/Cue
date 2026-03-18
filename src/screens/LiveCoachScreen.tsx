@@ -1,11 +1,3 @@
-/**
- * LiveCoachScreen — Real-Time Action Guide
- *
- * User describes what's happening → gets 2-3 recommended actions
- * with copyable response templates. No emotion gauge.
- * No psychological interpretation. No partner analysis.
- */
-
 import React, { useState } from "react";
 import {
   View, Text, TextInput, Pressable, StyleSheet, ScrollView,
@@ -19,16 +11,12 @@ import { rankActionsTS } from "../bandit/thompson";
 import { ruleCandidates } from "../coach/recommend";
 import type { CoachContext } from "../types/models";
 
-// ── Types ──────────────────────────────────────────────────────────────────
-
 type ActionGuide = { actionId: ActionId; title: string; template: string };
 type LiveResult = {
   urgencyDetected: boolean;
   urgencyPatterns: string[];
   actions: ActionGuide[];
 };
-
-// ── Response Templates ─────────────────────────────────────────────────────
 
 const TEMPLATES: Record<ActionId, string> = {
   A1: "Is now an okay time to talk about this?",
@@ -52,8 +40,6 @@ const TEMPLATES: Record<ActionId, string> = {
   A19: "I understand why you feel that way. I also want to share: ___.",
   A20: "Remember when we handled ___ well? We can do it again.",
 };
-
-// ── Analysis Logic ─────────────────────────────────────────────────────────
 
 function inferIntent(text: string): CoachContext["intent"] {
   const lower = text.toLowerCase();
@@ -92,8 +78,6 @@ function analyzeAndRecommend(text: string): LiveResult {
     })),
   };
 }
-
-// ── Component ──────────────────────────────────────────────────────────────
 
 export function LiveCoachScreen() {
   const [input, setInput] = useState("");
