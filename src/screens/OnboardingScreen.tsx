@@ -1,10 +1,3 @@
-/**
- * OnboardingScreen — Behavioral Preference Setup
- *
- * Collects observable, actionable preferences instead of
- * psychological classification (no love language / conflict style / attachment).
- */
-
 import React, { useMemo, useState } from "react";
 import {
   View, Text, Pressable, StyleSheet, ScrollView, SafeAreaView,
@@ -18,8 +11,6 @@ import type { ThemeColors } from "../theme";
 import { font, spacing, radii } from "../theme/tokens";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Onboarding">;
-
-// ── Questions (behavioral, not psychological) ──────────────────────────────
 
 type QOption = { label: string; value: string };
 
@@ -95,8 +86,6 @@ const QUESTIONS: Question[] = [
   },
 ];
 
-// ── Main Component ─────────────────────────────────────────────────────────
-
 export function OnboardingScreen({ navigation }: Props) {
   const { colors } = useTheme();
   const styles = useMemo(() => themedStyles(colors), [colors]);
@@ -144,7 +133,6 @@ export function OnboardingScreen({ navigation }: Props) {
     setPhase("done");
   }
 
-  // ── Intro ──────────────────────────────────────────────────────────────
   if (phase === "intro") {
     return (
       <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
@@ -185,7 +173,6 @@ export function OnboardingScreen({ navigation }: Props) {
     );
   }
 
-  // ── Questions ──────────────────────────────────────────────────────────
   if (phase === "questions") {
     const q = QUESTIONS[qIdx];
     return (
@@ -218,7 +205,6 @@ export function OnboardingScreen({ navigation }: Props) {
     );
   }
 
-  // ── Done ───────────────────────────────────────────────────────────────
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
       <ScrollView contentContainerStyle={styles.container}>
@@ -251,8 +237,6 @@ export function OnboardingScreen({ navigation }: Props) {
     </SafeAreaView>
   );
 }
-
-// ── Themed Styles ─────────────────────────────────────────────────────────
 
 function themedStyles(c: ThemeColors) {
   return StyleSheet.create({
