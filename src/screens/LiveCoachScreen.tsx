@@ -56,9 +56,16 @@ function analyzeAndRecommend(text: string): SuggestionSet {
   const signals = detectSignals(text);
   const intent = inferIntent(text);
   const stage = signals.hasUrgency ? "escalation" as const : "start" as const;
-  const prefText = getSetting("prefersTexting") === "true" ? 1 : 0;
-  const prefYesNo = getSetting("yesNoHelpful") === "true" ? 1 : 0;
-  const tone = (getSetting("scriptTone") as "casual" | "formal") || "casual";
+  const prefTextSetting = getSetting("prefText");
+  const prefYesNoSetting = getSetting("prefYesNo");
+  const toneSetting = getSetting("tone") ?? getSetting("scriptTone");
+  const prefText = prefTextSetting !== null
+    ? (prefTextSetting === "1" ? 1 : 0)
+    : (getSetting("prefersTexting") === "true" ? 1 : 0);
+  const prefYesNo = prefYesNoSetting !== null
+    ? (prefYesNoSetting === "1" ? 1 : 0)
+    : (getSetting("yesNoHelpful") === "true" ? 1 : 0);
+  const tone = toneSetting === "formal" ? "formal" : "casual";
 
   const ctx: CoachContext = {
     intent, stage, channel: "text", urgency: stage === "escalation" ? 1 : 0,
