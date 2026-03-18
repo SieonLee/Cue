@@ -1,20 +1,15 @@
 import { db } from "./db";
+import type { DbLike } from "./db";
 import type { CoachContext } from "../types/models";
 import type { ActionId } from "../coach/actions";
+import { readSetting, writeSetting } from "./persistence";
 
-export function getSetting(key: string): string | null {
-  const row = db.getFirstSync<{ value: string }>(
-    "SELECT value FROM settings WHERE key = ?",
-    [key]
-  );
-  return row?.value ?? null;
+export function getSetting(key: string, dbOverride: DbLike = db): string | null {
+  return readSetting(dbOverride, key);
 }
 
-export function setSetting(key: string, value: string) {
-  db.runSync(
-    "INSERT INTO settings(key, value) VALUES(?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
-    [key, value]
-  );
+export function setSetting(key: string, value: string, dbOverride: DbLike = db) {
+  writeSetting(dbOverride, key, value);
 }
 
 export function loadBanditParams(): Record<string, any> {
