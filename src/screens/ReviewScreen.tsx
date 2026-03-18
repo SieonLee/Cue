@@ -1,16 +1,3 @@
-/**
- * ReviewScreen — Session Outcome Review
- *
- * Post-session structured review that captures data signals:
- * - Observed outcome category (5 options)
- * - Self-rated energy before/after (1-10 scale)
- * - What worked / what to change (free text)
- * - Would use this action again? (boolean)
- *
- * Feeds into the Pattern Dashboard for action effectiveness analysis.
- * NO emotion interpretation. NO comfort language. ONLY data collection.
- */
-
 import React, { useCallback, useMemo, useState } from "react";
 import {
   View, Text, Pressable, StyleSheet, ScrollView, TextInput, Alert,
