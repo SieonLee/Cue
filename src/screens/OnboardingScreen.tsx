@@ -152,7 +152,7 @@ export function OnboardingScreen({ navigation }: Props) {
         <ScrollView contentContainerStyle={styles.container}>
           <Text style={styles.title}>Set up your preferences</Text>
           <Text style={styles.subtitle}>
-            7 quick questions about how you communicate.{"\n"}
+            A short setup so Cue can tailor recommendations to your style.{"\n"}
             No diagnosis. No personality tests. Just your preferences.
           </Text>
 
@@ -254,7 +254,15 @@ export function OnboardingScreen({ navigation }: Props) {
 function themedStyles(c: ThemeColors) {
   return StyleSheet.create({
     safe: { flex: 1 },
-    container: { flexGrow: 1, padding: spacing.page, gap: spacing.xl, paddingBottom: spacing.pageBtm },
+    container: {
+      flexGrow: 1,
+      padding: spacing.page,
+      gap: spacing.xl,
+      paddingBottom: spacing.pageBtm,
+      width: "100%",
+      maxWidth: 760,
+      alignSelf: "center",
+    },
     title: { fontSize: font.xxxl, fontWeight: font.bold, color: c.text },
     subtitle: { fontSize: font.base, color: c.textSecondary, lineHeight: 20 },
 
