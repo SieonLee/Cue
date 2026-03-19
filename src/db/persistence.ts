@@ -24,7 +24,14 @@ export function writeSetting(db: PersistenceDb, key: string, value: string) {
 
 export function buildExportPayload(db: PersistenceDb) {
   type SessionRow = { id: string; created_at: number; context_json: string; ranked_json: string };
-  type FeedbackRow = { session_id: string; chosen_action: string; reward: number; created_at: number; context_json: string | null };
+  type FeedbackRow = {
+    session_id: string;
+    chosen_action: string;
+    reward: number;
+    created_at: number;
+    context_json: string | null;
+    feedback_reason: string | null;
+  };
   type ParamsRow = { key: string; value_json: string };
   type ProfileRow = { key: string; value_json: string; completed_at: number };
 
@@ -32,7 +39,7 @@ export function buildExportPayload(db: PersistenceDb) {
     "SELECT id, created_at, context_json, ranked_json FROM coach_sessions ORDER BY created_at DESC"
   );
   const feedback = db.getAllSync<FeedbackRow>(
-    "SELECT session_id, chosen_action, reward, created_at, context_json FROM feedback ORDER BY created_at DESC"
+    "SELECT session_id, chosen_action, reward, created_at, context_json, feedback_reason FROM feedback ORDER BY created_at DESC"
   );
   const banditParams = db.getAllSync<ParamsRow>(
     "SELECT key, value_json FROM bandit_params"
@@ -54,6 +61,7 @@ export function buildExportPayload(db: PersistenceDb) {
       chosen_action: r.chosen_action,
       reward: r.reward,
       created_at: r.created_at,
+      feedback_reason: r.feedback_reason,
     })),
     banditParams: banditParams.map((r) => ({
       key: r.key,
