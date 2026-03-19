@@ -24,11 +24,15 @@ type FeedbackRow = {
   chosen_action: string;
   reward: number;
   created_at: number;
+  feedback_reason?: string | null;
 };
 
-type ReviewRow = {
-  id: string;
-  session_id: string;
+type ReviewSummary = {
+  totalReviews: number;
+  avgEmotionShift: number;
+  pendingReviews: number;
+  reviewCoverage: number;
+  oldestPendingHours: number | null;
 };
 
 const REACTIONS = [
@@ -119,17 +123,23 @@ export function ReviewScreen({ navigation }: Props) {
   const [whatToChange, setWhatToChange] = useState("");
   const [wouldUseAgain, setWouldUseAgain] = useState<boolean | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  const [lastShift, setLastShift] = useState(0);
 
   // Stats
-  const [totalReviews, setTotalReviews] = useState(0);
-  const [avgEmotionShift, setAvgEmotionShift] = useState(0);
+  const [summary, setSummary] = useState<ReviewSummary>({
+    totalReviews: 0,
+    avgEmotionShift: 0,
+    pendingReviews: 0,
+    reviewCoverage: 0,
+    oldestPendingHours: null,
+  });
 
   useFocusEffect(
     useCallback(() => {
       // Find sessions with feedback but without a review
       const feedbackSessions = db.getAllSync<SessionRow & FeedbackRow & { f_created_at: number }>(
         `SELECT s.id, s.created_at, s.context_json, s.ranked_json,
-                f.session_id, f.chosen_action, f.reward, f.created_at as f_created_at
+                f.session_id, f.chosen_action, f.reward, f.created_at as f_created_at, f.feedback_reason
          FROM coach_sessions s
          INNER JOIN feedback f ON f.session_id = s.id
          WHERE s.id NOT IN (SELECT session_id FROM outcome_reviews)
@@ -147,22 +157,44 @@ export function ReviewScreen({ navigation }: Props) {
           chosen_action: r.chosen_action,
           reward: r.reward,
           created_at: r.f_created_at ?? r.created_at,
+          feedback_reason: r.feedback_reason ?? null,
         },
       }));
       setSessions(mapped);
 
       // Load review stats
-      const countRow = db.getFirstSync<{ cnt: number }>(
+      const totalReviews = db.getFirstSync<{ cnt: number }>(
         "SELECT COUNT(*) as cnt FROM outcome_reviews"
-      );
-      setTotalReviews(countRow?.cnt ?? 0);
+      )?.cnt ?? 0;
 
-      const shiftRow = db.getFirstSync<{ avg_shift: number }>(
+      const avgEmotionShift = db.getFirstSync<{ avg_shift: number }>(
         "SELECT AVG(emotion_after - emotion_before) as avg_shift FROM outcome_reviews"
-      );
-      setAvgEmotionShift(shiftRow?.avg_shift ?? 0);
+      )?.avg_shift ?? 0;
+
+      const totalFeedback = db.getFirstSync<{ cnt: number }>(
+        "SELECT COUNT(*) as cnt FROM feedback"
+      )?.cnt ?? 0;
+
+      const oldestPendingCreatedAt = db.getFirstSync<{ created_at: number }>(
+        `SELECT f.created_at
+         FROM feedback f
+         WHERE f.session_id NOT IN (SELECT session_id FROM outcome_reviews)
+         ORDER BY f.created_at ASC
+         LIMIT 1`
+      )?.created_at;
+
+      setSummary({
+        totalReviews,
+        avgEmotionShift,
+        pendingReviews: mapped.length,
+        reviewCoverage: totalFeedback > 0 ? totalReviews / totalFeedback : 0,
+        oldestPendingHours: oldestPendingCreatedAt
+          ? Math.max(1, Math.round((Date.now() - oldestPendingCreatedAt) / 3_600_000))
+          : null,
+      });
 
       setSubmitted(false);
+      setLastShift(0);
       setReaction(null);
       setEmotionBefore(5);
       setEmotionAfter(5);
@@ -204,6 +236,22 @@ export function ReviewScreen({ navigation }: Props) {
     );
 
     setSubmitted(true);
+    setLastShift(emotionAfter - emotionBefore);
+  }
+
+  function resetForm() {
+    setReaction(null);
+    setEmotionBefore(5);
+    setEmotionAfter(5);
+    setWhatWorked("");
+    setWhatToChange("");
+    setWouldUseAgain(null);
+  }
+
+  function reviewNextSession() {
+    setSelectedIdx((i) => i + 1);
+    setSubmitted(false);
+    resetForm();
   }
 
   // Empty state
@@ -212,7 +260,7 @@ export function ReviewScreen({ navigation }: Props) {
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.title}>Conversation Review</Text>
 
-        {totalReviews > 0 ? (
+        {summary.totalReviews > 0 ? (
           <View style={styles.card}>
             <Text style={styles.cardTitle}>All caught up!</Text>
             <Text style={styles.subtitle}>
@@ -220,16 +268,19 @@ export function ReviewScreen({ navigation }: Props) {
             </Text>
             <View style={styles.statRow}>
               <View style={styles.statBox}>
-                <Text style={styles.statValue}>{totalReviews}</Text>
+                <Text style={styles.statValue}>{summary.totalReviews}</Text>
                 <Text style={styles.statLabel}>Reviews</Text>
               </View>
               <View style={styles.statBox}>
-                <Text style={[styles.statValue, { color: avgEmotionShift >= 0 ? "#2a9d8f" : "#e63946" }]}>
-                  {avgEmotionShift >= 0 ? "+" : ""}{avgEmotionShift.toFixed(1)}
+                <Text style={[styles.statValue, { color: summary.avgEmotionShift >= 0 ? "#2a9d8f" : "#e63946" }]}>
+                  {summary.avgEmotionShift >= 0 ? "+" : ""}{summary.avgEmotionShift.toFixed(1)}
                 </Text>
                 <Text style={styles.statLabel}>Avg energy shift</Text>
               </View>
             </View>
+            <Text style={styles.summaryNote}>
+              Review coverage is {Math.round(summary.reviewCoverage * 100)}% of completed feedback sessions.
+            </Text>
           </View>
         ) : (
           <View style={styles.card}>
@@ -250,7 +301,7 @@ export function ReviewScreen({ navigation }: Props) {
 
   // Submitted state
   if (submitted) {
-    const shift = emotionAfter - emotionBefore;
+    const remainingReviews = Math.max(0, sessions.length - selectedIdx - 1);
     return (
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.title}>Review saved</Text>
@@ -269,25 +320,21 @@ export function ReviewScreen({ navigation }: Props) {
           <Text style={styles.subtitle}>
             This review helps the app learn which actions work best for you in different situations.
           </Text>
+          <Text style={styles.summaryNote}>
+            {lastShift >= 0 ? "Energy improved" : "Energy dropped"} by {Math.abs(lastShift)} point{Math.abs(lastShift) === 1 ? "" : "s"}.
+            {remainingReviews > 0 ? ` ${remainingReviews} more follow-up review${remainingReviews === 1 ? "" : "s"} waiting.` : " You're caught up for now."}
+          </Text>
         </View>
 
         {sessions.length > 1 && selectedIdx < sessions.length - 1 ? (
-          <Pressable
-            style={styles.primaryBtn}
-            onPress={() => {
-              setSelectedIdx((i) => i + 1);
-              setSubmitted(false);
-              setReaction(null);
-              setEmotionBefore(5);
-              setEmotionAfter(5);
-              setWhatWorked("");
-              setWhatToChange("");
-              setWouldUseAgain(null);
-            }}
-          >
+          <Pressable style={styles.primaryBtn} onPress={reviewNextSession}>
             <Text style={styles.primaryBtnText}>Review next session →</Text>
           </Pressable>
         ) : null}
+
+        <Pressable style={styles.secondaryBtn} onPress={() => navigation.navigate("WeeklyReport")}>
+          <Text style={styles.secondaryBtnText}>Open weekly summary →</Text>
+        </Pressable>
 
         <Pressable style={styles.secondaryBtn} onPress={() => navigation.navigate("Patterns")}>
           <Text style={styles.secondaryBtnText}>View pattern dashboard →</Text>
@@ -315,6 +362,23 @@ export function ReviewScreen({ navigation }: Props) {
         Record what happened. This data improves action ranking.
       </Text>
 
+      <View style={styles.summaryCard}>
+        <View style={styles.summaryStat}>
+          <Text style={styles.summaryValue}>{summary.pendingReviews}</Text>
+          <Text style={styles.summaryLabel}>pending</Text>
+        </View>
+        <View style={styles.summaryStat}>
+          <Text style={styles.summaryValue}>{Math.round(summary.reviewCoverage * 100)}%</Text>
+          <Text style={styles.summaryLabel}>coverage</Text>
+        </View>
+        <View style={styles.summaryStat}>
+          <Text style={styles.summaryValue}>
+            {summary.oldestPendingHours != null ? `${summary.oldestPendingHours}h` : "—"}
+          </Text>
+          <Text style={styles.summaryLabel}>oldest</Text>
+        </View>
+      </View>
+
       {/* Session context card */}
       <View style={styles.card}>
         <View style={styles.sessionHeader}>
@@ -329,6 +393,9 @@ export function ReviewScreen({ navigation }: Props) {
         </View>
         <Text style={styles.actionName}>{action?.title ?? actionId}</Text>
         <Text style={styles.actionDesc}>{action?.description ?? ""}</Text>
+        {current.feedback.feedback_reason ? (
+          <Text style={styles.followupHint}>Initial feedback: "{current.feedback.feedback_reason}"</Text>
+        ) : null}
         <View style={styles.tagRow}>
           <View style={styles.tag}><Text style={styles.tagText}>{ctx.intent}</Text></View>
           <View style={styles.tag}><Text style={styles.tagText}>{ctx.stage}</Text></View>
@@ -434,6 +501,19 @@ const styles = StyleSheet.create({
   container: { flexGrow: 1, padding: 18, gap: 14, paddingBottom: 32 },
   title: { fontSize: 20, fontWeight: "700" },
   subtitle: { fontSize: 13, opacity: 0.7, lineHeight: 18 },
+  summaryCard: {
+    flexDirection: "row",
+    gap: 10,
+    borderWidth: 1,
+    borderColor: "#eee",
+    borderRadius: 12,
+    padding: 12,
+    backgroundColor: "#fafafa",
+  },
+  summaryStat: { flex: 1, alignItems: "center", gap: 3 },
+  summaryValue: { fontSize: 18, fontWeight: "800" },
+  summaryLabel: { fontSize: 11, opacity: 0.55, textTransform: "uppercase", fontWeight: "700" },
+  summaryNote: { fontSize: 12, opacity: 0.65, lineHeight: 18 },
 
   card: { borderWidth: 1, borderColor: "#eee", borderRadius: 12, padding: 14, gap: 10 },
   cardTitle: { fontSize: 14, fontWeight: "700" },
@@ -445,6 +525,7 @@ const styles = StyleSheet.create({
 
   actionName: { fontSize: 16, fontWeight: "700" },
   actionDesc: { fontSize: 13, opacity: 0.7, lineHeight: 18 },
+  followupHint: { fontSize: 12, lineHeight: 18, color: "#666" },
   tagRow: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
   tag: { paddingVertical: 3, paddingHorizontal: 8, borderRadius: 999, backgroundColor: "#f0f0f0" },
   tagWarn: { backgroundColor: "#fff3e0" },
