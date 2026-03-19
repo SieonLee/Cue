@@ -4,6 +4,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import { db } from "../db/db";
 import { ACTIONS } from "../coach/actions";
 import type { ActionId } from "../coach/actions";
+import { getAlgorithmStats } from "../db/signals";
 import { useTheme } from "../theme";
 import type { ThemeColors } from "../theme";
 import { font, spacing, radii } from "../theme/tokens";
@@ -21,6 +22,11 @@ type InsightCard = {
   tone: "positive" | "neutral";
 };
 
+type PolicyStat = {
+  count: number;
+  avgReward: number;
+};
+
 type DashData = {
   totalSessions: number;
   totalFeedback: number;
@@ -30,6 +36,10 @@ type DashData = {
   actionStats: ActionStat[];
   rewardDistribution: { good: number; okay: number; bad: number };
   insights: InsightCard[];
+  policyStats: { thompson: PolicyStat; linucb: PolicyStat };
+  topChoiceRate: number;
+  recentRewardDelta: number | null;
+  bestContextAction: string | null;
 };
 
 function loadStats(): DashData {
@@ -80,6 +90,16 @@ function loadStats(): DashData {
   )?.cnt ?? 0;
 
   const insights: InsightCard[] = [];
+  const policyStats = getAlgorithmStats();
+  const topChoiceCount = db.getFirstSync<{ cnt: number }>(
+    `SELECT COUNT(*) as cnt
+     FROM feedback f
+     INNER JOIN coach_sessions s ON s.id = f.session_id
+     WHERE json_extract(s.ranked_json, '$[0]') = f.chosen_action`
+  )?.cnt ?? 0;
+  const topChoiceRate = totalFeedback > 0 ? topChoiceCount / totalFeedback : 0;
+  const recentRewardDelta =
+    totalFeedback > 0 && last7Sessions > 0 ? last7AvgReward - avgReward : null;
 
   const bestAction = actionStats.find((action) => action.count >= 2);
   if (bestAction) {
@@ -134,6 +154,20 @@ function loadStats(): DashData {
     });
   }
 
+  type BestContextActionRow = { intent: string; chosen_action: string; cnt: number; avg_r: number };
+  const bestContextActionRow = db.getFirstSync<BestContextActionRow>(
+    `SELECT json_extract(s.context_json, '$.intent') as intent, f.chosen_action, COUNT(*) as cnt, AVG(f.reward) as avg_r
+     FROM feedback f
+     INNER JOIN coach_sessions s ON s.id = f.session_id
+     GROUP BY intent, f.chosen_action
+     HAVING COUNT(*) >= 2
+     ORDER BY avg_r DESC, cnt DESC
+     LIMIT 1`
+  );
+  const bestContextAction = bestContextActionRow
+    ? `${bestContextActionRow.intent.replace("_", " ")} works best with ${ACTIONS[bestContextActionRow.chosen_action as ActionId]?.title ?? bestContextActionRow.chosen_action}.`
+    : null;
+
   return {
     totalSessions,
     totalFeedback,
@@ -143,6 +177,10 @@ function loadStats(): DashData {
     actionStats,
     rewardDistribution: { good, okay, bad },
     insights,
+    policyStats,
+    topChoiceRate,
+    recentRewardDelta,
+    bestContextAction,
   };
 }
 
@@ -158,6 +196,13 @@ export function StatisticsScreen() {
     actionStats: [],
     rewardDistribution: { good: 0, okay: 0, bad: 0 },
     insights: [],
+    policyStats: {
+      thompson: { count: 0, avgReward: 0 },
+      linucb: { count: 0, avgReward: 0 },
+    },
+    topChoiceRate: 0,
+    recentRewardDelta: null,
+    bestContextAction: null,
   });
 
   useFocusEffect(
@@ -207,6 +252,66 @@ export function StatisticsScreen() {
           </View>
         </View>
       </View>
+
+      {data.totalFeedback > 0 && (
+        <View style={styles.card}>
+          <Text style={styles.cardLabel}>Evaluation snapshot</Text>
+          <View style={styles.policyRow}>
+            <View style={styles.policyCard}>
+              <Text style={styles.policyName}>Thompson</Text>
+              <Text style={styles.policyValue}>
+                {data.policyStats.thompson.count > 0
+                  ? `${Math.round(data.policyStats.thompson.avgReward * 100)}%`
+                  : "-"}
+              </Text>
+              <Text style={styles.policyMeta}>
+                {data.policyStats.thompson.count} rated sessions
+              </Text>
+            </View>
+            <View style={styles.policyCard}>
+              <Text style={styles.policyName}>LinUCB</Text>
+              <Text style={styles.policyValue}>
+                {data.policyStats.linucb.count > 0
+                  ? `${Math.round(data.policyStats.linucb.avgReward * 100)}%`
+                  : "-"}
+              </Text>
+              <Text style={styles.policyMeta}>
+                {data.policyStats.linucb.count} rated sessions
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.metricRow}>
+            <Text style={styles.metricLabel}>Top-ranked action chosen</Text>
+            <Text style={styles.metricValue}>{Math.round(data.topChoiceRate * 100)}%</Text>
+          </View>
+
+          <View style={styles.metricRow}>
+            <Text style={styles.metricLabel}>Recent reward trend</Text>
+            <Text
+              style={[
+                styles.metricValue,
+                data.recentRewardDelta != null && data.recentRewardDelta >= 0
+                  ? styles.metricValuePositive
+                  : data.recentRewardDelta != null
+                    ? styles.metricValueNegative
+                    : null,
+              ]}
+            >
+              {data.recentRewardDelta == null
+                ? "Need more recent data"
+                : `${data.recentRewardDelta >= 0 ? "+" : ""}${Math.round(data.recentRewardDelta * 100)} pts vs all-time`}
+            </Text>
+          </View>
+
+          {data.bestContextAction && (
+            <View style={styles.evalNote}>
+              <Text style={styles.evalNoteTitle}>Best-performing pattern</Text>
+              <Text style={styles.evalNoteBody}>{data.bestContextAction}</Text>
+            </View>
+          )}
+        </View>
+      )}
 
       <View style={styles.card}>
         <Text style={styles.cardLabel}>What to try next</Text>
@@ -291,6 +396,26 @@ function themedStyles(c: ThemeColors) {
     trendItem: { alignItems: "center", flex: 1 },
     trendValue: { fontSize: font.xl, fontWeight: font.extrabold, color: c.text },
     trendSubtext: { fontSize: font.xs, color: c.textTertiary, fontWeight: font.semibold },
+    policyRow: { flexDirection: "row", gap: spacing.sm },
+    policyCard: { flex: 1, borderRadius: radii.lg, backgroundColor: c.gray100, padding: spacing.md, gap: 4 },
+    policyName: { fontSize: font.sm, fontWeight: font.extrabold, color: c.text },
+    policyValue: { fontSize: font.xl, fontWeight: font.extrabold, color: c.text },
+    policyMeta: { fontSize: font.xs, color: c.textTertiary },
+    metricRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      borderTopWidth: 1,
+      borderTopColor: c.border,
+      paddingTop: spacing.sm,
+    },
+    metricLabel: { fontSize: font.sm, color: c.textSecondary, fontWeight: font.semibold },
+    metricValue: { fontSize: font.sm, color: c.text, fontWeight: font.extrabold, textAlign: "right" },
+    metricValuePositive: { color: c.teal },
+    metricValueNegative: { color: c.danger },
+    evalNote: { borderRadius: radii.lg, backgroundColor: c.tealLight, padding: spacing.md, gap: 4 },
+    evalNoteTitle: { fontSize: font.sm, fontWeight: font.extrabold, color: c.text },
+    evalNoteBody: { fontSize: font.md, lineHeight: 18, color: c.textSecondary },
     insightRow: { borderRadius: radii.lg, padding: spacing.md, gap: 4 },
     insightRowPositive: { backgroundColor: c.tealLight },
     insightRowNeutral: { backgroundColor: c.gray100 },
