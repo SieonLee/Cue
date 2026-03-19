@@ -20,7 +20,15 @@ type WeekData = {
   reviewCoverage: number;
   pendingReviews: number;
   nextFocus: string;
+  reminderTiming: string | null;
 };
+
+function getWeeklyReviewReminder(pendingReviews: number, oldestPendingHours: number | null): string | null {
+  if (!pendingReviews || oldestPendingHours == null) return null;
+  if (oldestPendingHours <= 6) return "You still have a same-day follow-up waiting. Review it while the reaction is easy to remember.";
+  if (oldestPendingHours <= 24) return "Try to close out today's pending review before the end of the day.";
+  return "At least one follow-up review is more than a day old. Clearing it will make next week's summary more reliable.";
+}
 
 function getWeekBounds(weeksAgo: number): { start: number; end: number } {
   const now = new Date();
@@ -109,6 +117,18 @@ function computeWeekData(): WeekData {
        AND session_id NOT IN (SELECT session_id FROM outcome_reviews)`,
     [thisWeek.start, thisWeek.end]
   )?.cnt ?? 0;
+  const oldestPendingCreatedAt = db.getFirstSync<{ created_at: number }>(
+    `SELECT created_at
+     FROM feedback
+     WHERE created_at >= ? AND created_at < ?
+       AND session_id NOT IN (SELECT session_id FROM outcome_reviews)
+     ORDER BY created_at ASC
+     LIMIT 1`,
+    [thisWeek.start, thisWeek.end]
+  )?.created_at;
+  const oldestPendingHours = oldestPendingCreatedAt
+    ? Math.max(1, Math.round((Date.now() - oldestPendingCreatedAt) / 3_600_000))
+    : null;
 
   const observation = generateObservation(sessions, avgReward, reviews, activeDays);
   const nextFocus = generateNextFocus({
@@ -120,11 +140,13 @@ function computeWeekData(): WeekData {
     pendingReviews,
   });
 
+  const reminderTiming = getWeeklyReviewReminder(pendingReviews, oldestPendingHours);
+
   return {
     sessions, reviews, avgReward, topAction,
     topChannel,
     prevSessions, prevAvgReward,
-    activeDays, observation, reviewCoverage, pendingReviews, nextFocus,
+    activeDays, observation, reviewCoverage, pendingReviews, nextFocus, reminderTiming,
   };
 }
 
@@ -284,6 +306,13 @@ export function WeeklyReportScreen() {
         <Text style={styles.recText}>{data.observation}</Text>
       </View>
 
+      {data.reminderTiming && (
+        <View style={styles.reminderCard}>
+          <Text style={styles.reminderLabel}>Review timing</Text>
+          <Text style={styles.reminderText}>{data.reminderTiming}</Text>
+        </View>
+      )}
+
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Next focus</Text>
         <Text style={styles.topActionDetail}>{data.nextFocus}</Text>
@@ -329,6 +358,16 @@ const styles = StyleSheet.create({
   },
   recLabel: { fontSize: 11, fontWeight: "800", color: "#2a9d8f", letterSpacing: 1 },
   recText: { fontSize: 14, lineHeight: 22 },
+  reminderCard: {
+    borderWidth: 1,
+    borderColor: "#f4a261",
+    borderRadius: 12,
+    padding: 14,
+    gap: 6,
+    backgroundColor: "#fff7ef",
+  },
+  reminderLabel: { fontSize: 11, fontWeight: "800", color: "#f4a261", letterSpacing: 1 },
+  reminderText: { fontSize: 13, lineHeight: 20, color: "#6b4f1f" },
 
   emptyNote: { fontSize: 13, opacity: 0.5, textAlign: "center", lineHeight: 20, paddingVertical: 10 },
   footer: { fontSize: 11, opacity: 0.5, lineHeight: 16, textAlign: "center" },
