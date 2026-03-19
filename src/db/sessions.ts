@@ -44,6 +44,14 @@ export function resetBanditParams() {
   db.runSync("DELETE FROM bandit_params WHERE key IN ('params', 'linucb_params')");
 }
 
+export function getFeedbackCount(): number {
+  return db.getFirstSync<{ cnt: number }>("SELECT COUNT(*) as cnt FROM feedback")?.cnt ?? 0;
+}
+
+export function isColdStartUser(threshold: number = 3): boolean {
+  return getFeedbackCount() < threshold;
+}
+
 // Export: returns JSON string (no raw message content — context tags only)
 export function exportSessionsJson(): string {
   type Row = { id: string; created_at: number; context_json: string; ranked_json: string };
