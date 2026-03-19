@@ -4,8 +4,9 @@ import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/AppNavigator";
 import type { Channel, CoachContext, Intent, Stage, Tone } from "../types/models";
-import { getSetting, loadBanditParams, loadLinUCBBanditParams } from "../db/sessions";
+import { getSetting, isColdStartUser, loadBanditParams, loadLinUCBBanditParams } from "../db/sessions";
 import { ruleCandidates } from "../coach/recommend";
+import { prioritizeColdStartRanking } from "../coach/coldStart";
 import { rankActionsTS } from "../bandit/thompson";
 import { rankActionsLinUCB, loadLinUCBParams } from "../bandit/linucb";
 import { ALL_ACTION_IDS } from "../coach/actions";
@@ -60,6 +61,7 @@ export function CoachScreen({ navigation }: Props) {
   const [selected, setSelected] = useState<Scenario | null>(null);
   const [channel, setChannel] = useState<Channel>("text");
   const [tiredFlag, setTiredFlag] = useState<0 | 1>(0);
+  const coldStart = isColdStartUser();
 
   const [prefs, setPrefs] = useState<{ prefText: 0 | 1; prefYesNo: 0 | 1; noticeHours: number; tone: Tone }>({
     prefText: 1, prefYesNo: 1, noticeHours: 2, tone: "casual",
@@ -104,6 +106,10 @@ export function CoachScreen({ navigation }: Props) {
     } else {
       const params = loadBanditParams();
       ranked = rankActionsTS(ctx, candidates, params);
+    }
+
+    if (coldStart) {
+      ranked = prioritizeColdStartRanking(ranked as ActionId[]) as string[];
     }
 
     db.runSync(
@@ -182,6 +188,11 @@ export function CoachScreen({ navigation }: Props) {
       <Text style={styles.note}>
         Your profile and past feedback are used to personalize recommendations.
       </Text>
+      {coldStart && (
+        <Text style={styles.coldStartNote}>
+          Early sessions prioritize simpler, lower-pressure actions while Cue learns what works for you.
+        </Text>
+      )}
     </ScrollView>
   );
 }
@@ -226,4 +237,5 @@ const themedStyles = (c: ThemeColors) =>
     primaryBtnText: { color: c.btnPrimaryText, fontWeight: "700", fontSize: 16 },
 
     note: { fontSize: 12, color: c.textTertiary, lineHeight: 18, textAlign: "center" },
+    coldStartNote: { fontSize: 12, color: c.teal, lineHeight: 18, textAlign: "center", fontWeight: "600" },
   });
