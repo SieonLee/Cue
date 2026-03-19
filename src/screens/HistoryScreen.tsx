@@ -1,6 +1,8 @@
 import React, { useCallback, useMemo, useState } from "react";
-import { View, Text, StyleSheet, ScrollView } from "react-native";
+import { View, Text, StyleSheet, ScrollView, Pressable } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
+import type { NativeStackScreenProps } from "@react-navigation/native-stack";
+import type { RootStackParamList } from "../navigation/AppNavigator";
 import { db } from "../db/db";
 import type { CoachContext } from "../types/models";
 import type { ActionId } from "../coach/actions";
@@ -65,7 +67,9 @@ function formatDate(ts: number): string {
   });
 }
 
-export function HistoryScreen() {
+type Props = NativeStackScreenProps<RootStackParamList, "History">;
+
+export function HistoryScreen({ navigation }: Props) {
   const { colors } = useTheme();
   const styles = useMemo(() => themedStyles(colors), [colors]);
   const [sessions, setSessions] = useState<ParsedSession[]>([]);
@@ -114,7 +118,11 @@ export function HistoryScreen() {
       <Text style={styles.subtitle}>Last 100 sessions. No message content is stored.</Text>
 
       {sessions.map((session) => (
-        <View key={session.id} style={styles.card}>
+        <Pressable
+          key={session.id}
+          style={styles.card}
+          onPress={() => navigation.navigate("SessionDetail", { sessionId: session.id })}
+        >
           <View style={styles.cardHeader}>
             <Text style={styles.dateText}>{formatDate(session.createdAt)}</Text>
             <View style={styles.intentBadge}>
@@ -221,7 +229,7 @@ export function HistoryScreen() {
           ) : (
             <Text style={styles.noFeedback}>No feedback yet</Text>
           )}
-        </View>
+        </Pressable>
       ))}
     </ScrollView>
   );
