@@ -9,7 +9,7 @@ import { useTheme } from "../theme";
 import type { ThemeColors } from "../theme";
 import { getSetting } from "../db/sessions";
 import { db } from "../db/db";
-import { ACTIONS } from "../coach/actions";
+import { ACTIONS, ALL_ACTION_IDS } from "../coach/actions";
 import type { ActionId } from "../coach/actions";
 import { getDailyLoop, setMorningGoal, getCoupleFingerprint } from "../db/signals";
 import type { FingerprintInsight } from "../db/signals";
@@ -185,7 +185,7 @@ export function HomeScreen({ navigation }: Props) {
           { v: data.streak, l: "streak" },
           { v: data.totalSessions, l: "sessions" },
           { v: `${data.lessonsCompleted}/8`, l: "lessons" },
-          { v: "20", l: "actions" },
+          { v: ALL_ACTION_IDS.length, l: "actions" },
         ].map((s) => (
           <View key={s.l} style={st.statBox}>
             <Text style={st.statVal}>{s.v}</Text>
@@ -345,14 +345,23 @@ export function HomeScreen({ navigation }: Props) {
         <Text style={st.settingsBtnText}>{"\u2699\uFE0F"} Settings</Text>
       </Pressable>
 
-      <Text style={st.footer}>Cue {"\u2014"} Bayesian adaptive coaching {"\u00B7"} 20 actions {"\u00B7"} on-device</Text>
+      <Text style={st.footer}>
+        Cue {"\u2014"} Bayesian adaptive coaching {"\u00B7"} {ALL_ACTION_IDS.length} actions {"\u00B7"} on-device
+      </Text>
     </ScrollView>
   );
 }
 
 function themedStyles(c: ThemeColors) {
   return StyleSheet.create({
-    container: { padding: 18, gap: 12, paddingBottom: 40 },
+    container: {
+      padding: 18,
+      gap: 12,
+      paddingBottom: 40,
+      width: "100%",
+      maxWidth: 760,
+      alignSelf: "center",
+    },
     header: { marginBottom: 2 },
     brand: { fontSize: 30, fontWeight: "900", letterSpacing: -1, color: c.text },
     tagline: { fontSize: 12, fontWeight: "600", marginTop: -2, color: c.textTertiary },
