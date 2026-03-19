@@ -4,6 +4,34 @@ On-device couple communication coaching app built with React Native, Expo SDK 54
 
 Cue helps users prepare for difficult conversations, choose lower-friction communication actions, review outcomes, and personalize future recommendations through an adaptive feedback loop that runs entirely on device.
 
+## Why This Project Matters
+
+Cue is not just a mobile app. It is a contextual recommendation system that selects actions under uncertainty, captures user feedback, and updates future recommendations over time.
+
+From a hiring perspective, this project demonstrates:
+
+- product-oriented machine learning instead of notebook-only modeling
+- recommendation logic tied to a real user workflow
+- exploration vs. exploitation through contextual bandit methods
+- experimentation thinking through Thompson Sampling and LinUCB comparison
+- local-first analytics, persistence, and feedback-loop design
+
+## Recruiter Snapshot
+
+- **Problem:** recommend the most helpful communication action for a user in a given conversation context
+- **Approach:** combine rule-based candidate filtering with contextual bandit ranking
+- **Algorithms:** Thompson Sampling, LinUCB, warm-start priors, and hierarchical fallback
+- **Product loop:** `Onboarding -> Coach -> Result -> Feedback -> Review`
+- **Why it stands out:** shows how applied ML can live inside a user-facing product rather than as an isolated model
+
+## Business / Product Framing
+
+The core question behind Cue is:
+
+`Given this communication context, which action is most likely to help right now?`
+
+That framing makes the project relevant to product data science, recommendation systems, experimentation, and applied machine learning roles.
+
 ## Overview
 
 Cue is a local-first mobile app for communication coaching.
