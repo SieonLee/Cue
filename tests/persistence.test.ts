@@ -88,12 +88,13 @@ test("export payload and reset helpers preserve settings but clear app data", ()
     }),
     ranked_json: JSON.stringify(["A5", "A4"]),
   });
-  (db.getAllSync("SELECT session_id, chosen_action, reward, created_at, context_json FROM feedback ORDER BY created_at DESC") as any[]).push({
+  (db.getAllSync("SELECT session_id, chosen_action, reward, created_at, context_json, feedback_reason FROM feedback ORDER BY created_at DESC") as any[]).push({
     session_id: "session-1",
     chosen_action: "A5",
     reward: 1,
     created_at: 1710000010,
     context_json: null,
+    feedback_reason: "It felt easy to use in the moment.",
   });
   (db.getAllSync("SELECT key, value_json FROM bandit_params") as any[]).push({
     key: "params",
@@ -110,6 +111,7 @@ test("export payload and reset helpers preserve settings but clear app data", ()
   assert.equal(payload.sessions.length, 1);
   assert.equal(payload.sessions[0].top_action, "A5");
   assert.equal(payload.feedback.length, 1);
+  assert.equal(payload.feedback[0].feedback_reason, "It felt easy to use in the moment.");
   assert.equal(payload.banditParams.length, 1);
   assert.equal(payload.profile.length, 1);
 
@@ -117,6 +119,6 @@ test("export payload and reset helpers preserve settings but clear app data", ()
 
   assert.equal(readSetting(db, "tone"), "casual");
   assert.equal((db.getAllSync("SELECT id, created_at, context_json, ranked_json FROM coach_sessions ORDER BY created_at DESC") as any[]).length, 0);
-  assert.equal((db.getAllSync("SELECT session_id, chosen_action, reward, created_at, context_json FROM feedback ORDER BY created_at DESC") as any[]).length, 0);
+  assert.equal((db.getAllSync("SELECT session_id, chosen_action, reward, created_at, context_json, feedback_reason FROM feedback ORDER BY created_at DESC") as any[]).length, 0);
   assert.equal((db.getAllSync("SELECT key, value_json FROM bandit_params") as any[]).length, 0);
 });
