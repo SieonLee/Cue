@@ -94,9 +94,15 @@ export async function initDb(): Promise<void> {
   if (initPromise) return initPromise;
 
   initPromise = (async () => {
-    currentDb = Platform.OS === "web" ? await createWebDb() : createNativeDb();
-    currentDb.execSync(SCHEMA);
-    runMigrations(currentDb);
+    try {
+      currentDb = Platform.OS === "web" ? await createWebDb() : createNativeDb();
+      currentDb.execSync(SCHEMA);
+      runMigrations(currentDb);
+    } catch (error) {
+      currentDb = null;
+      initPromise = null;
+      throw error;
+    }
   })();
 
   return initPromise;
@@ -108,6 +114,7 @@ function runMigrations(database: DbLike) {
   const currentRow = database.getFirstSync<{ version: number | null }>(
     "SELECT MAX(version) as version FROM schema_version"
   );
+  // Treat schema creation as version 1 so migrations can start from version 2.
   const current = currentRow?.version ?? 1;
 
   for (const m of MIGRATIONS) {
