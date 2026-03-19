@@ -380,7 +380,15 @@ export function StatisticsScreen() {
 
 function themedStyles(c: ThemeColors) {
   return StyleSheet.create({
-    container: { flexGrow: 1, padding: spacing.page, gap: spacing.gap, paddingBottom: spacing.pageBtm },
+    container: {
+      flexGrow: 1,
+      padding: spacing.page,
+      gap: spacing.gap,
+      paddingBottom: spacing.pageBtm,
+      width: "100%",
+      maxWidth: 760,
+      alignSelf: "center",
+    },
     title: { fontSize: font.xxl, fontWeight: font.bold, color: c.text },
     subtitle: { fontSize: font.md, color: c.textSecondary, lineHeight: 18 },
 
