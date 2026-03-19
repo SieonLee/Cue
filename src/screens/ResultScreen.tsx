@@ -52,6 +52,12 @@ type Personalization = {
   tone: "casual" | "formal";
 };
 
+type SavedFeedback = {
+  chosen_action: ActionId;
+  reward: number;
+  feedback_reason: string | null;
+};
+
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -87,6 +93,34 @@ function channelHint(channel: string): string {
   if (channel === "call") return "On a call, keep sentences shorter and allow silence.";
   if (channel === "in_person") return "In person, slow down and pause between sentences.";
   return "Over text, keep it to 2\u20133 sentences and ask only one question.";
+}
+
+function buildRecommendationReasons(action: ActionId, ctx: CoachContext, prefs: Personalization): string[] {
+  const reasons: string[] = [];
+
+  reasons.push(`This fits a ${ctx.intent.replace("_", " ")} conversation in the ${ctx.stage} stage.`);
+
+  if (ctx.channel === "text") {
+    reasons.push("You are communicating over text, so lower-pressure wording is a better fit.");
+  } else if (ctx.channel === "call") {
+    reasons.push("This works well when you need a short and clear opening on a call.");
+  } else {
+    reasons.push("This is a good in-person option when pacing and tone matter most.");
+  }
+
+  if (ctx.tiredFlag) {
+    reasons.push("You flagged that they may be tired or busy, so this leans toward a lighter first step.");
+  } else if (ctx.prefYesNo && (action === "A1" || action === "A4")) {
+    reasons.push("Your preferences lean toward simpler prompts, and this keeps it easy to respond.");
+  } else if (ctx.prefText && (action === "A3" || action === "A17")) {
+    reasons.push("Your saved preferences lean toward text-friendly communication, and this matches that style.");
+  } else if (prefs.tone === "formal") {
+    reasons.push("The wording stays more structured, which matches your saved tone preference.");
+  } else {
+    reasons.push("This keeps the conversation direct without making the tone feel too heavy.");
+  }
+
+  return reasons.slice(0, 3);
 }
 
 function buildScript(action: ActionId, ctx: CoachContext, prefs: Personalization): ScriptPack {
@@ -493,17 +527,15 @@ export function ResultScreen({ route, navigation }: Props) {
   }, [sessionId]);
 
   const existingFeedback = useMemo(() => {
-    return db.getFirstSync<{
-      chosen_action: ActionId;
-      reward: number;
-    }>(
-      "SELECT chosen_action, reward FROM feedback WHERE session_id = ?",
+    return db.getFirstSync<SavedFeedback>(
+      "SELECT chosen_action, reward, feedback_reason FROM feedback WHERE session_id = ?",
       [sessionId]
     );
   }, [sessionId]);
 
   const [chosen, setChosen] = useState<ActionId | null>(existingFeedback?.chosen_action ?? null);
   const [submitted, setSubmitted] = useState(Boolean(existingFeedback));
+  const [feedbackReason, setFeedbackReason] = useState(existingFeedback?.feedback_reason ?? "");
   const [feedbackLabel, setFeedbackLabel] = useState<RewardLabel | null>(
     existingFeedback
       ? existingFeedback.reward >= 0.75
@@ -554,8 +586,8 @@ export function ResultScreen({ route, navigation }: Props) {
     recordFingerprintEvent(chosen, ctx.channel, ctx.intent, reward);
 
     db.runSync(
-      "INSERT INTO feedback(session_id, chosen_action, reward, created_at, context_json) VALUES(?, ?, ?, ?, ?)",
-      [sessionId, chosen, reward, Date.now(), JSON.stringify(ctx)]
+      "INSERT INTO feedback(session_id, chosen_action, reward, created_at, context_json, feedback_reason) VALUES(?, ?, ?, ?, ?, ?)",
+      [sessionId, chosen, reward, Date.now(), JSON.stringify(ctx), feedbackReason.trim() || null]
     );
 
     setSubmitted(true);
@@ -642,6 +674,16 @@ export function ResultScreen({ route, navigation }: Props) {
                   <Text style={styles.intentText}>{a.intent}</Text>
                 </View>
               )}
+              {active && (
+                <View style={styles.reasonBox}>
+                  <Text style={styles.reasonLabel}>Why this recommendation</Text>
+                  {buildRecommendationReasons(id, ctx, prefs).map((reason, reasonIdx) => (
+                    <Text key={`${id}-reason-${reasonIdx}`} style={styles.reasonText}>
+                      {"\u2022"} {reason}
+                    </Text>
+                  ))}
+                </View>
+              )}
             </Pressable>
           );
         })}
@@ -714,6 +756,9 @@ export function ResultScreen({ route, navigation }: Props) {
             <Text style={styles.feedbackDoneText}>
               Saved — {feedbackLabel}. This session is locked in, and Cue will use it the next time it ranks actions.
             </Text>
+            {feedbackReason.trim().length > 0 && (
+              <Text style={styles.savedReasonText}>Your note: {feedbackReason.trim()}</Text>
+            )}
             <Pressable
               style={styles.resetBtn}
               onPress={() => navigation.navigate("Review")}
@@ -723,17 +768,28 @@ export function ResultScreen({ route, navigation }: Props) {
             </Pressable>
           </View>
         ) : (
-          <View style={styles.feedbackRow}>
-            {(["Good", "Okay", "Bad"] as RewardLabel[]).map((lab) => (
-              <Pressable
-                key={lab}
-                onPress={() => submitFeedback(lab)}
-                style={[styles.fbBtn, ls && lsStyles?.primaryBtn]}
-                accessibilityRole="button" accessibilityLabel={`Rate this action as ${lab}`}
-              >
-                <Text style={styles.fbBtnText}>{lab}</Text>
-              </Pressable>
-            ))}
+          <View style={styles.feedbackBlock}>
+            <Text style={styles.note}>Optional: add a quick note about why this felt helpful or not helpful.</Text>
+            <TextInput
+              style={styles.reasonInput}
+              value={feedbackReason}
+              onChangeText={setFeedbackReason}
+              placeholder="Example: This felt easy to send, but it may have been too vague."
+              placeholderTextColor={colors.textTertiary}
+              multiline
+            />
+            <View style={styles.feedbackRow}>
+              {(["Good", "Okay", "Bad"] as RewardLabel[]).map((lab) => (
+                <Pressable
+                  key={lab}
+                  onPress={() => submitFeedback(lab)}
+                  style={[styles.fbBtn, ls && lsStyles?.primaryBtn]}
+                  accessibilityRole="button" accessibilityLabel={`Rate this action as ${lab}`}
+                >
+                  <Text style={styles.fbBtnText}>{lab}</Text>
+                </Pressable>
+              ))}
+            </View>
           </View>
         )}
       </View>
@@ -829,14 +885,30 @@ const themedStyles = (c: ThemeColors) =>
     intentBox: { marginTop: spacing.sm, backgroundColor: c.overlay15, borderRadius: radii.sm, padding: spacing.md, gap: spacing.sm },
     intentLabel: { fontSize: font.sm, fontWeight: font.extrabold, color: c.btnPrimaryText, opacity: 0.7 },
     intentText: { fontSize: 12, lineHeight: 18, color: c.btnPrimaryText, opacity: 0.9 },
+    reasonBox: { marginTop: spacing.sm, backgroundColor: c.tealLight, borderRadius: radii.sm, padding: spacing.md, gap: spacing.xs },
+    reasonLabel: { fontSize: font.sm, fontWeight: font.extrabold, color: c.text },
+    reasonText: { fontSize: 12, lineHeight: 18, color: c.textSecondary },
 
     feedbackRow: { flexDirection: "row", gap: spacing.md, flexWrap: "wrap" },
+    feedbackBlock: { gap: spacing.md },
     fbBtn: { paddingVertical: spacing.lg, paddingHorizontal: spacing.xl, borderRadius: radii.md, backgroundColor: c.btnPrimary },
     fbBtnText: { color: c.btnPrimaryText, fontWeight: font.extrabold },
     feedbackDone: { gap: spacing.md },
     feedbackDoneText: { fontSize: font.md, lineHeight: 18, color: c.textSecondary },
+    savedReasonText: { fontSize: font.sm, lineHeight: 18, color: c.textSecondary, fontStyle: "italic" },
     resetBtn: { alignSelf: "flex-start", paddingVertical: spacing.md, paddingHorizontal: spacing.lg, borderRadius: radii.md, borderWidth: 1, borderColor: c.border },
     resetBtnText: { fontSize: font.md, fontWeight: font.semibold, color: c.text },
+    reasonInput: {
+      minHeight: 72,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: radii.sm,
+      padding: spacing.md,
+      backgroundColor: c.cardElevated,
+      color: c.text,
+      textAlignVertical: "top",
+      lineHeight: 18,
+    },
 
     note: { fontSize: 12, color: c.textSecondary, lineHeight: 18 },
 
