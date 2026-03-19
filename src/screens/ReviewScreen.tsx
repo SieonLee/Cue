@@ -498,7 +498,15 @@ export function ReviewScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flexGrow: 1, padding: 18, gap: 14, paddingBottom: 32 },
+  container: {
+    flexGrow: 1,
+    padding: 18,
+    gap: 14,
+    paddingBottom: 32,
+    width: "100%",
+    maxWidth: 760,
+    alignSelf: "center",
+  },
   title: { fontSize: 20, fontWeight: "700" },
   subtitle: { fontSize: 13, opacity: 0.7, lineHeight: 18 },
   summaryCard: {
