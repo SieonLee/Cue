@@ -97,10 +97,19 @@ type DashboardData = {
   totalSessions: number;
   pendingReviews: number;
   oldestPendingHours: number | null;
+  reviewReminder: string | null;
   topAction: { id: ActionId; title: string; avgReward: number } | null;
   lessonsCompleted: number;
   fingerprint: FingerprintInsight;
 };
+
+function getReviewReminder(hours: number | null, pendingReviews: number): string | null {
+  if (!pendingReviews || hours == null) return null;
+  if (hours <= 3) return "A quick follow-up now will capture the conversation while it's still fresh.";
+  if (hours <= 12) return "This is a good window to log how the conversation actually landed.";
+  if (hours <= 24) return "Try to review this today before the details start to blur.";
+  return "A review is overdue. Logging it now will still help Cue learn from the outcome.";
+}
 
 function loadDashboard(): DashboardData {
   const today = new Date();
@@ -129,6 +138,7 @@ function loadDashboard(): DashboardData {
   const oldestPendingHours = oldestPendingCreatedAt
     ? Math.max(1, Math.round((Date.now() - oldestPendingCreatedAt) / 3_600_000))
     : null;
+  const reviewReminder = getReviewReminder(oldestPendingHours, pendingReviews);
 
   type AR = { chosen_action: string; avg_r: number };
   const topActions = db.getAllSync<AR>(
@@ -143,7 +153,16 @@ function loadDashboard(): DashboardData {
   let fingerprint: FingerprintInsight = { bestHour: null, bestChannel: null, bestAction: null, avgRewardByHour: {}, avgRewardByChannel: {} };
   try { fingerprint = getCoupleFingerprint(); } catch { /* */ }
 
-  return { streak, totalSessions, pendingReviews, oldestPendingHours, topAction, lessonsCompleted, fingerprint };
+  return {
+    streak,
+    totalSessions,
+    pendingReviews,
+    oldestPendingHours,
+    reviewReminder,
+    topAction,
+    lessonsCompleted,
+    fingerprint,
+  };
 }
 
 export function HomeScreen({ navigation }: Props) {
@@ -160,6 +179,7 @@ export function HomeScreen({ navigation }: Props) {
     totalSessions: 0,
     pendingReviews: 0,
     oldestPendingHours: null,
+    reviewReminder: null,
     topAction: null,
     lessonsCompleted: 0,
     fingerprint: emptyFP,
@@ -248,9 +268,10 @@ export function HomeScreen({ navigation }: Props) {
           <View style={{ flex: 1 }}>
             <Text style={st.nudgeTitle}>{data.pendingReviews} to review</Text>
             <Text style={st.nudgeDesc}>
-              {data.oldestPendingHours != null
-                ? `Oldest follow-up is ${data.oldestPendingHours}h old. Reviews sharpen next week's suggestions.`
-                : "Feedback trains the model."}
+              {data.reviewReminder ??
+                (data.oldestPendingHours != null
+                  ? `Oldest follow-up is ${data.oldestPendingHours}h old. Reviews sharpen next week's suggestions.`
+                  : "Feedback trains the model.")}
             </Text>
           </View>
           <Text style={{ fontSize: 20, opacity: 0.3 }}>{"\u203A"}</Text>
