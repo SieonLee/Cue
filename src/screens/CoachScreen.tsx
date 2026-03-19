@@ -10,6 +10,7 @@ import { prioritizeColdStartRanking } from "../coach/coldStart";
 import { rankActionsTS } from "../bandit/thompson";
 import { rankActionsLinUCB, loadLinUCBParams } from "../bandit/linucb";
 import { ALL_ACTION_IDS } from "../coach/actions";
+import type { ActionId } from "../coach/actions";
 import { assignAlgorithm } from "../db/signals";
 import { db } from "../db/db";
 import { useSensoryStyles } from "../hooks/useSensoryStyles";
