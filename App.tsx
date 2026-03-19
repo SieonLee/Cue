@@ -15,15 +15,25 @@ function AppInner() {
   const { colors, isDark } = useTheme();
 
   useEffect(() => {
-    try {
-      initDb();
-      const onboarded = getSetting("onboarding_completed");
-      setNeedsOnboarding(onboarded !== "true");
-      setReady(true);
-    } catch (e: any) {
-      setError(e?.message ?? "Unknown init error");
-      setReady(true);
-    }
+    let cancelled = false;
+
+    (async () => {
+      try {
+        await initDb();
+        if (cancelled) return;
+        const onboarded = getSetting("onboarding_completed");
+        setNeedsOnboarding(onboarded !== "true");
+        setReady(true);
+      } catch (e: any) {
+        if (cancelled) return;
+        setError(e?.message ?? "Unknown init error");
+        setReady(true);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const navTheme = {
