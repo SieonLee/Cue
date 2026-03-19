@@ -383,14 +383,23 @@ npm test
 
 ## Screenshots
 
-Representative product screens:
+These are the screens I would use when walking someone through the product.
 
-![Onboarding](https://raw.githubusercontent.com/SieonLee/Cue/main/docs/screenshots/01_onboarding.png)
-![Home](https://raw.githubusercontent.com/SieonLee/Cue/main/docs/screenshots/02_home.png)
-![Coach](https://raw.githubusercontent.com/SieonLee/Cue/main/docs/screenshots/03_coach.png)
-![Result](https://raw.githubusercontent.com/SieonLee/Cue/main/docs/screenshots/05_result.png)
-![History](https://raw.githubusercontent.com/SieonLee/Cue/main/docs/screenshots/07_history.png)
-![Statistics](https://raw.githubusercontent.com/SieonLee/Cue/main/docs/screenshots/09_statistics.png)
+### Core flow
+
+| Onboarding | Coaching |
+| --- | --- |
+| ![Onboarding](https://raw.githubusercontent.com/SieonLee/Cue/main/docs/screenshots/01_onboarding.png) | ![Coach](https://raw.githubusercontent.com/SieonLee/Cue/main/docs/screenshots/03_coach.png) |
+
+| Result | Statistics |
+| --- | --- |
+| ![Result](https://raw.githubusercontent.com/SieonLee/Cue/main/docs/screenshots/05_result.png) | ![Statistics](https://raw.githubusercontent.com/SieonLee/Cue/main/docs/screenshots/09_statistics.png) |
+
+### Supporting product surfaces
+
+| Home | History |
+| --- | --- |
+| ![Home](https://raw.githubusercontent.com/SieonLee/Cue/main/docs/screenshots/02_home.png) | ![History](https://raw.githubusercontent.com/SieonLee/Cue/main/docs/screenshots/07_history.png) |
 
 Additional screens captured for documentation:
 
