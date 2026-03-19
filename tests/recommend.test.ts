@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { ruleCandidates } from "../src/coach/recommend";
+import { prioritizeColdStartRanking } from "../src/coach/coldStart";
 import type { CoachContext } from "../src/types/models";
 
 function makeContext(overrides: Partial<CoachContext> = {}): CoachContext {
@@ -37,4 +38,11 @@ test("ruleCandidates keeps gratitude scenarios in appreciation-oriented actions"
   assert.ok(candidates.includes("A8"));
   assert.ok(candidates.includes("A20"));
   assert.ok(!candidates.includes("A2"));
+});
+
+test("prioritizeColdStartRanking moves lower-pressure actions to the front", () => {
+  const ranked = prioritizeColdStartRanking(["A2", "A5", "A19", "A6", "A1"]);
+
+  assert.deepEqual(ranked.slice(0, 3), ["A5", "A19", "A1"]);
+  assert.equal(ranked.length, 5);
 });
