@@ -15,6 +15,12 @@ type ActionStat = {
   avgReward: number;
 };
 
+type InsightCard = {
+  title: string;
+  body: string;
+  tone: "positive" | "neutral";
+};
+
 type DashData = {
   totalSessions: number;
   totalFeedback: number;
@@ -23,6 +29,7 @@ type DashData = {
   last7AvgReward: number;
   actionStats: ActionStat[];
   rewardDistribution: { good: number; okay: number; bad: number };
+  insights: InsightCard[];
 };
 
 function loadStats(): DashData {
@@ -72,6 +79,61 @@ function loadStats(): DashData {
     "SELECT COUNT(*) as cnt FROM feedback WHERE reward < 0.25"
   )?.cnt ?? 0;
 
+  const insights: InsightCard[] = [];
+
+  const bestAction = actionStats.find((action) => action.count >= 2);
+  if (bestAction) {
+    insights.push({
+      title: "Best action lately",
+      body: `${bestAction.title} is your strongest action so far at ${Math.round(bestAction.avgReward * 100)}% average reward across ${bestAction.count} uses.`,
+      tone: "positive",
+    });
+  }
+
+  type ChannelRow = { channel: string; cnt: number; avg_r: number };
+  const bestChannel = db.getFirstSync<ChannelRow>(
+    `SELECT json_extract(s.context_json, '$.channel') as channel, COUNT(*) as cnt, AVG(f.reward) as avg_r
+     FROM feedback f
+     INNER JOIN coach_sessions s ON s.id = f.session_id
+     GROUP BY channel
+     HAVING COUNT(*) >= 2
+     ORDER BY avg_r DESC
+     LIMIT 1`
+  );
+  if (bestChannel?.channel) {
+    insights.push({
+      title: "Channel pattern",
+      body: `${bestChannel.channel} conversations are averaging ${Math.round(bestChannel.avg_r * 100)}% reward across ${bestChannel.cnt} sessions.`,
+      tone: "neutral",
+    });
+  }
+
+  type ContextRow = { intent: string; cnt: number; avg_r: number };
+  const bestContext = db.getFirstSync<ContextRow>(
+    `SELECT json_extract(s.context_json, '$.intent') as intent, COUNT(*) as cnt, AVG(f.reward) as avg_r
+     FROM feedback f
+     INNER JOIN coach_sessions s ON s.id = f.session_id
+     GROUP BY intent
+     HAVING COUNT(*) >= 2
+     ORDER BY avg_r DESC
+     LIMIT 1`
+  );
+  if (bestContext?.intent) {
+    insights.push({
+      title: "Context trend",
+      body: `${bestContext.intent.replace("_", " ")} situations are going best right now at ${Math.round(bestContext.avg_r * 100)}% average reward.`,
+      tone: "positive",
+    });
+  }
+
+  if (insights.length === 0) {
+    insights.push({
+      title: "More data will sharpen this",
+      body: "Finish a few more sessions and leave feedback to unlock action, channel, and context insights.",
+      tone: "neutral",
+    });
+  }
+
   return {
     totalSessions,
     totalFeedback,
@@ -80,6 +142,7 @@ function loadStats(): DashData {
     last7AvgReward,
     actionStats,
     rewardDistribution: { good, okay, bad },
+    insights,
   };
 }
 
@@ -94,6 +157,7 @@ export function StatisticsScreen() {
     last7AvgReward: 0,
     actionStats: [],
     rewardDistribution: { good: 0, okay: 0, bad: 0 },
+    insights: [],
   });
 
   useFocusEffect(
@@ -142,6 +206,22 @@ export function StatisticsScreen() {
             <Text style={styles.trendSubtext}>avg reward (all)</Text>
           </View>
         </View>
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.cardLabel}>What to try next</Text>
+        {data.insights.map((insight, idx) => (
+          <View
+            key={`${insight.title}-${idx}`}
+            style={[
+              styles.insightRow,
+              insight.tone === "positive" ? styles.insightRowPositive : styles.insightRowNeutral,
+            ]}
+          >
+            <Text style={styles.insightTitle}>{insight.title}</Text>
+            <Text style={styles.insightBody}>{insight.body}</Text>
+          </View>
+        ))}
       </View>
 
       {/* Reward distribution */}
@@ -211,6 +291,11 @@ function themedStyles(c: ThemeColors) {
     trendItem: { alignItems: "center", flex: 1 },
     trendValue: { fontSize: font.xl, fontWeight: font.extrabold, color: c.text },
     trendSubtext: { fontSize: font.xs, color: c.textTertiary, fontWeight: font.semibold },
+    insightRow: { borderRadius: radii.lg, padding: spacing.md, gap: 4 },
+    insightRowPositive: { backgroundColor: c.tealLight },
+    insightRowNeutral: { backgroundColor: c.gray100 },
+    insightTitle: { fontSize: font.sm, fontWeight: font.extrabold, color: c.text },
+    insightBody: { fontSize: font.md, lineHeight: 18, color: c.textSecondary },
 
     barRow: { flexDirection: "row", alignItems: "center", gap: 8 },
     barLabel: { width: 40, fontSize: font.sm, fontWeight: font.semibold, color: c.textSecondary },
