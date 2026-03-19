@@ -96,6 +96,7 @@ type DashboardData = {
   streak: number;
   totalSessions: number;
   pendingReviews: number;
+  oldestPendingHours: number | null;
   topAction: { id: ActionId; title: string; avgReward: number } | null;
   lessonsCompleted: number;
   fingerprint: FingerprintInsight;
@@ -118,6 +119,16 @@ function loadDashboard(): DashboardData {
   const pendingReviews = db.getFirstSync<{ cnt: number }>(
     `SELECT COUNT(*) as cnt FROM feedback f LEFT JOIN outcome_reviews o ON o.session_id = f.session_id WHERE o.id IS NULL`
   )?.cnt ?? 0;
+  const oldestPendingCreatedAt = db.getFirstSync<{ created_at: number }>(
+    `SELECT f.created_at
+     FROM feedback f LEFT JOIN outcome_reviews o ON o.session_id = f.session_id
+     WHERE o.id IS NULL
+     ORDER BY f.created_at ASC
+     LIMIT 1`
+  )?.created_at;
+  const oldestPendingHours = oldestPendingCreatedAt
+    ? Math.max(1, Math.round((Date.now() - oldestPendingCreatedAt) / 3_600_000))
+    : null;
 
   type AR = { chosen_action: string; avg_r: number };
   const topActions = db.getAllSync<AR>(
@@ -132,7 +143,7 @@ function loadDashboard(): DashboardData {
   let fingerprint: FingerprintInsight = { bestHour: null, bestChannel: null, bestAction: null, avgRewardByHour: {}, avgRewardByChannel: {} };
   try { fingerprint = getCoupleFingerprint(); } catch { /* */ }
 
-  return { streak, totalSessions, pendingReviews, topAction, lessonsCompleted, fingerprint };
+  return { streak, totalSessions, pendingReviews, oldestPendingHours, topAction, lessonsCompleted, fingerprint };
 }
 
 export function HomeScreen({ navigation }: Props) {
@@ -144,7 +155,15 @@ export function HomeScreen({ navigation }: Props) {
   const profileAName = getSetting("myName") || "Me (A)";
   const profileBName = getSetting("partnerName") || "Partner (B)";
   const emptyFP: FingerprintInsight = { bestHour: null, bestChannel: null, bestAction: null, avgRewardByHour: {}, avgRewardByChannel: {} };
-  const [data, setData] = useState<DashboardData>({ streak: 0, totalSessions: 0, pendingReviews: 0, topAction: null, lessonsCompleted: 0, fingerprint: emptyFP });
+  const [data, setData] = useState<DashboardData>({
+    streak: 0,
+    totalSessions: 0,
+    pendingReviews: 0,
+    oldestPendingHours: null,
+    topAction: null,
+    lessonsCompleted: 0,
+    fingerprint: emptyFP,
+  });
   const [dailyLoop, setDailyLoop] = useState({ goalId: null as string | null, checkinDone: false });
   const [goalAccepted, setGoalAccepted] = useState(false);
   const [showMore, setShowMore] = useState(false);
@@ -228,7 +247,11 @@ export function HomeScreen({ navigation }: Props) {
           <Text style={{ fontSize: 20 }}>{"\uD83D\uDCDD"}</Text>
           <View style={{ flex: 1 }}>
             <Text style={st.nudgeTitle}>{data.pendingReviews} to review</Text>
-            <Text style={st.nudgeDesc}>Feedback trains the model.</Text>
+            <Text style={st.nudgeDesc}>
+              {data.oldestPendingHours != null
+                ? `Oldest follow-up is ${data.oldestPendingHours}h old. Reviews sharpen next week's suggestions.`
+                : "Feedback trains the model."}
+            </Text>
           </View>
           <Text style={{ fontSize: 20, opacity: 0.3 }}>{"\u203A"}</Text>
         </Pressable>
