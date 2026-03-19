@@ -12,10 +12,14 @@ type WeekData = {
   reviews: number;
   avgReward: number;
   topAction: { id: string; count: number; avgReward: number } | null;
+  topChannel: { channel: string; count: number; avgReward: number } | null;
   prevSessions: number;
   prevAvgReward: number;
   activeDays: number;
   observation: string;
+  reviewCoverage: number;
+  pendingReviews: number;
+  nextFocus: string;
 };
 
 function getWeekBounds(weeksAgo: number): { start: number; end: number } {
@@ -63,6 +67,22 @@ function computeWeekData(): WeekData {
     ? { id: topActions[0].chosen_action, count: topActions[0].cnt, avgReward: topActions[0].avg_r }
     : null;
 
+  type ChannelRow = { channel: string; cnt: number; avg_r: number };
+  const topChannels = db.getAllSync<ChannelRow>(
+    `SELECT json_extract(s.context_json, '$.channel') as channel, COUNT(*) as cnt, AVG(f.reward) as avg_r
+     FROM feedback f
+     INNER JOIN coach_sessions s ON s.id = f.session_id
+     WHERE f.created_at >= ? AND f.created_at < ?
+     GROUP BY channel
+     HAVING COUNT(*) >= 1
+     ORDER BY avg_r DESC, cnt DESC
+     LIMIT 1`,
+    [thisWeek.start, thisWeek.end]
+  );
+  const topChannel = topChannels.length > 0
+    ? { channel: topChannels[0].channel, count: topChannels[0].cnt, avgReward: topChannels[0].avg_r }
+    : null;
+
   const prevSessionRow = db.getFirstSync<{ cnt: number }>(
     "SELECT COUNT(*) as cnt FROM feedback WHERE created_at >= ? AND created_at < ?",
     [lastWeek.start, lastWeek.end]
@@ -81,13 +101,30 @@ function computeWeekData(): WeekData {
     [thisWeek.start, thisWeek.end]
   );
   const activeDays = activeDayRow?.cnt ?? 0;
+  const reviewCoverage = sessions > 0 ? reviews / sessions : 0;
+  const pendingReviews = db.getFirstSync<{ cnt: number }>(
+    `SELECT COUNT(*) as cnt
+     FROM feedback
+     WHERE created_at >= ? AND created_at < ?
+       AND session_id NOT IN (SELECT session_id FROM outcome_reviews)`,
+    [thisWeek.start, thisWeek.end]
+  )?.cnt ?? 0;
 
   const observation = generateObservation(sessions, avgReward, reviews, activeDays);
+  const nextFocus = generateNextFocus({
+    sessions,
+    reviews,
+    avgReward,
+    topAction,
+    topChannel,
+    pendingReviews,
+  });
 
   return {
     sessions, reviews, avgReward, topAction,
+    topChannel,
     prevSessions, prevAvgReward,
-    activeDays, observation,
+    activeDays, observation, reviewCoverage, pendingReviews, nextFocus,
   };
 }
 
@@ -110,6 +147,36 @@ function generateObservation(
     return `Avg outcome ${Math.round(avgReward * 100)}% — current actions are performing well.`;
   }
   return `${sessions} session${sessions !== 1 ? "s" : ""} across ${activeDays} day${activeDays !== 1 ? "s" : ""}. More data improves action ranking.`;
+}
+
+function generateNextFocus({
+  sessions,
+  reviews,
+  avgReward,
+  topAction,
+  topChannel,
+  pendingReviews,
+}: {
+  sessions: number;
+  reviews: number;
+  avgReward: number;
+  topAction: WeekData["topAction"];
+  topChannel: WeekData["topChannel"];
+  pendingReviews: number;
+}): string {
+  if (pendingReviews > 0) {
+    return `Complete ${pendingReviews} follow-up review${pendingReviews === 1 ? "" : "s"} to give the model stronger outcome data.`;
+  }
+  if (sessions > 0 && reviews === 0) {
+    return "Add a follow-up review after your next session so Cue can learn from the full conversation outcome.";
+  }
+  if (avgReward < 0.5 && topAction) {
+    return `Try a different opening than ${getActionLabel(topAction.id)} next week to compare outcomes.`;
+  }
+  if (topChannel) {
+    return `${topChannel.channel} is your strongest channel this week. Use it first when a conversation can wait.`;
+  }
+  return "Keep logging sessions and reviews so weekly patterns become more stable.";
 }
 
 function formatDelta(current: number, previous: number): { text: string; positive: boolean } {
@@ -177,6 +244,17 @@ export function WeeklyReportScreen() {
         </View>
       </View>
 
+      <View style={styles.grid}>
+        <View style={styles.statBox}>
+          <Text style={styles.statValue}>{Math.round(data.reviewCoverage * 100)}%</Text>
+          <Text style={styles.statLabel}>Review coverage</Text>
+        </View>
+        <View style={styles.statBox}>
+          <Text style={styles.statValue}>{data.pendingReviews}</Text>
+          <Text style={styles.statLabel}>Pending reviews</Text>
+        </View>
+      </View>
+
       {/* Top action */}
       {data.topAction && (
         <View style={styles.card}>
@@ -190,10 +268,25 @@ export function WeeklyReportScreen() {
         </View>
       )}
 
+      {data.topChannel && (
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Strongest channel this week</Text>
+          <Text style={styles.topActionName}>{data.topChannel.channel}</Text>
+          <Text style={styles.topActionDetail}>
+            {data.topChannel.count} session{data.topChannel.count === 1 ? "" : "s"} — avg outcome {Math.round(data.topChannel.avgReward * 100)}%
+          </Text>
+        </View>
+      )}
+
       {/* Observation */}
       <View style={styles.recCard}>
         <Text style={styles.recLabel}>This week</Text>
         <Text style={styles.recText}>{data.observation}</Text>
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Next focus</Text>
+        <Text style={styles.topActionDetail}>{data.nextFocus}</Text>
       </View>
 
       {data.sessions === 0 && (
