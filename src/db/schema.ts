@@ -17,7 +17,8 @@ CREATE TABLE IF NOT EXISTS feedback (
   chosen_action TEXT NOT NULL,
   reward REAL NOT NULL,
   created_at INTEGER NOT NULL,
-  context_json TEXT
+  context_json TEXT,
+  feedback_reason TEXT
 );
 
 CREATE TABLE IF NOT EXISTS bandit_params (
@@ -129,5 +130,9 @@ export const MIGRATIONS = [
   {
     version: 2,
     sql: `ALTER TABLE feedback ADD COLUMN context_json TEXT;`,
+  },
+  {
+    version: 3,
+    sql: `ALTER TABLE feedback ADD COLUMN feedback_reason TEXT;`,
   },
 ];
