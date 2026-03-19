@@ -6,8 +6,10 @@ import { db } from "../db/db";
 import type { CoachContext } from "../types/models";
 import type { ActionId } from "../coach/actions";
 import { ACTIONS, ALL_ACTION_IDS } from "../coach/actions";
+import { COLD_START_THRESHOLD } from "../coach/coldStart";
 import {
   getSetting,
+  getFeedbackCount,
   loadBanditParams,
   loadLinUCBBanditParams,
   saveBanditParams,
@@ -490,6 +492,7 @@ export function ResultScreen({ route, navigation }: Props) {
   const { sessionId } = route.params;
   currentSessionId = sessionId;
   const styles = useMemo(() => themedStyles(colors), [colors]);
+  const coldStart = getFeedbackCount() < COLD_START_THRESHOLD;
 
   const prefs = useMemo<Personalization>(() => {
     const myName = (getSetting("myName") ?? "").trim();
@@ -601,6 +604,15 @@ export function ResultScreen({ route, navigation }: Props) {
         These options are ranked from your current context and past feedback.
         Pick one, then use the draft below as a starting point.
       </Text>
+
+      {coldStart && (
+        <View style={styles.coldStartCard}>
+          <Text style={styles.coldStartLabel}>Getting started</Text>
+          <Text style={styles.coldStartText}>
+            You are still in the first few sessions, so Cue is leaning toward easier, lower-pressure actions while it learns your patterns.
+          </Text>
+        </View>
+      )}
 
       <View style={[styles.card, ls && lsStyles?.card]}>
         <Text style={styles.cardTitle}>Top picks</Text>
@@ -855,6 +867,9 @@ const themedStyles = (c: ThemeColors) =>
 
     card: { borderWidth: 1, borderColor: c.border, borderRadius: radii.lg, padding: spacing.cardPad, gap: spacing.md, backgroundColor: c.card },
     cardTitle: { fontSize: font.base, fontWeight: font.bold, color: c.text },
+    coldStartCard: { borderWidth: 1, borderColor: c.teal, borderRadius: radii.lg, padding: spacing.cardPad, gap: spacing.xs, backgroundColor: c.tealLight },
+    coldStartLabel: { fontSize: font.sm, fontWeight: font.extrabold, color: c.text },
+    coldStartText: { fontSize: font.md, lineHeight: 18, color: c.textSecondary },
 
     item: { borderWidth: 1, borderRadius: radii.lg, padding: spacing.lg, gap: 6 },
     itemActive: { backgroundColor: c.btnPrimary, borderColor: c.btnPrimary },
