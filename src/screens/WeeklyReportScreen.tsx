@@ -6,6 +6,9 @@ import { useFocusEffect } from "@react-navigation/native";
 import { db } from "../db/db";
 import { ACTIONS } from "../coach/actions";
 import type { ActionId } from "../coach/actions";
+import { useTheme } from "../theme";
+import type { ThemeColors } from "../theme";
+import { font, spacing, radii } from "../theme/tokens";
 
 type WeekData = {
   sessions: number;
@@ -217,6 +220,8 @@ function getActionLabel(id: string): string {
 }
 
 export function WeeklyReportScreen() {
+  const { colors } = useTheme();
+  const styles = React.useMemo(() => themedStyles(colors), [colors]);
   const [data, setData] = useState<WeekData | null>(null);
 
   useFocusEffect(
@@ -331,44 +336,71 @@ export function WeeklyReportScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flexGrow: 1, padding: 18, gap: 14, paddingBottom: 32 },
-  title: { fontSize: 22, fontWeight: "700" },
+function themedStyles(c: ThemeColors) {
+  return StyleSheet.create({
+    container: {
+      flexGrow: 1,
+      padding: spacing.page,
+      gap: spacing.gap,
+      paddingBottom: spacing.pageBtm,
+      width: "100%",
+      maxWidth: 760,
+      alignSelf: "center",
+    },
+    title: { fontSize: font.xxl, fontWeight: font.bold, color: c.text },
 
-  grid: { flexDirection: "row", gap: 10 },
-  statBox: {
-    flex: 1, alignItems: "center", gap: 2,
-    borderWidth: 1, borderColor: "#eee", borderRadius: 14, paddingVertical: 16,
-  },
-  statValue: { fontSize: 28, fontWeight: "800" },
-  statLabel: { fontSize: 12, fontWeight: "600", opacity: 0.6 },
-  delta: { fontSize: 11, fontWeight: "600", marginTop: 2 },
-  deltaPos: { color: "#2a9d8f" },
-  deltaNeg: { color: "#e76f51" },
+    grid: { flexDirection: "row", gap: spacing.sm },
+    statBox: {
+      flex: 1,
+      alignItems: "center",
+      gap: 2,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: radii.lg,
+      paddingVertical: spacing.md + 2,
+      backgroundColor: c.gray100,
+    },
+    statValue: { fontSize: font.xxxl, fontWeight: font.extrabold, color: c.text },
+    statLabel: { fontSize: font.sm, fontWeight: font.semibold, color: c.textTertiary },
+    delta: { fontSize: font.xs + 1, fontWeight: font.semibold, marginTop: 2 },
+    deltaPos: { color: c.teal },
+    deltaNeg: { color: c.danger },
 
-  card: { borderWidth: 1, borderColor: "#eee", borderRadius: 12, padding: 14, gap: 6 },
-  cardTitle: { fontSize: 14, fontWeight: "700" },
+    card: {
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: radii.lg,
+      padding: spacing.cardPad,
+      gap: 6,
+      backgroundColor: c.card,
+    },
+    cardTitle: { fontSize: font.md, fontWeight: font.extrabold, color: c.text },
 
-  topActionName: { fontSize: 18, fontWeight: "800" },
-  topActionDetail: { fontSize: 13, opacity: 0.6 },
+    topActionName: { fontSize: font.lg + 1, fontWeight: font.extrabold, color: c.text },
+    topActionDetail: { fontSize: font.sm + 1, color: c.textSecondary, lineHeight: 18 },
 
-  recCard: {
-    borderWidth: 2, borderColor: "#2a9d8f", borderRadius: 14, padding: 16, gap: 6,
-    backgroundColor: "#f0faf9",
-  },
-  recLabel: { fontSize: 11, fontWeight: "800", color: "#2a9d8f", letterSpacing: 1 },
-  recText: { fontSize: 14, lineHeight: 22 },
-  reminderCard: {
-    borderWidth: 1,
-    borderColor: "#f4a261",
-    borderRadius: 12,
-    padding: 14,
-    gap: 6,
-    backgroundColor: "#fff7ef",
-  },
-  reminderLabel: { fontSize: 11, fontWeight: "800", color: "#f4a261", letterSpacing: 1 },
-  reminderText: { fontSize: 13, lineHeight: 20, color: "#6b4f1f" },
+    recCard: {
+      borderWidth: 1.5,
+      borderColor: c.tealBorder,
+      borderRadius: radii.lg,
+      padding: spacing.cardPad,
+      gap: 6,
+      backgroundColor: c.tealLight,
+    },
+    recLabel: { fontSize: font.xs + 1, fontWeight: font.extrabold, color: c.teal, letterSpacing: 1 },
+    recText: { fontSize: font.md, lineHeight: 22, color: c.text },
+    reminderCard: {
+      borderWidth: 1,
+      borderColor: c.orange,
+      borderRadius: radii.lg,
+      padding: spacing.cardPad,
+      gap: 6,
+      backgroundColor: c.orangeLight,
+    },
+    reminderLabel: { fontSize: font.xs + 1, fontWeight: font.extrabold, color: c.orange, letterSpacing: 1 },
+    reminderText: { fontSize: font.sm + 1, lineHeight: 20, color: c.textSecondary },
 
-  emptyNote: { fontSize: 13, opacity: 0.5, textAlign: "center", lineHeight: 20, paddingVertical: 10 },
-  footer: { fontSize: 11, opacity: 0.5, lineHeight: 16, textAlign: "center" },
-});
+    emptyNote: { fontSize: font.sm + 1, color: c.textTertiary, textAlign: "center", lineHeight: 20, paddingVertical: 10 },
+    footer: { fontSize: font.xs + 1, color: c.textTertiary, lineHeight: 16, textAlign: "center" },
+  });
+}
