@@ -28,6 +28,7 @@ import { ConflictRadarScreen } from "../screens/ConflictRadarScreen";
 import { ModelHistoryScreen } from "../screens/ModelHistoryScreen";
 import { EveningCheckInScreen } from "../screens/EveningCheckInScreen";
 import { StatisticsScreen } from "../screens/StatisticsScreen";
+import { SessionDetailScreen } from "../screens/SessionDetailScreen";
 
 export type RootStackParamList = {
   Onboarding: undefined;
@@ -36,6 +37,7 @@ export type RootStackParamList = {
   Result: { sessionId: string };
   Settings: undefined;
   History: undefined;
+  SessionDetail: { sessionId: string };
   Stats: undefined;
   CheckIn: undefined;
   Timer: undefined;
@@ -71,6 +73,7 @@ export function AppNavigator({ initialRoute }: { initialRoute?: keyof RootStackP
       <Stack.Screen name="Result"        component={ResultScreen}       options={{ title: "Recommendations" }} />
       <Stack.Screen name="Settings"      component={SettingsScreen}     options={{ title: "Our Settings" }} />
       <Stack.Screen name="History"       component={HistoryScreen}      options={{ title: "Session History" }} />
+      <Stack.Screen name="SessionDetail" component={SessionDetailScreen} options={{ title: "Session Detail" }} />
       <Stack.Screen name="Stats"         component={StatsScreen}        options={{ title: "Bandit Stats" }} />
       <Stack.Screen name="CheckIn"       component={CheckInScreen}      options={{ title: "Pre-Talk Check" }} />
       <Stack.Screen name="Timer"         component={TimerScreen}        options={{ title: "Timeout Timer" }} />
