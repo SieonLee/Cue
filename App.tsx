@@ -8,11 +8,32 @@ import { SensoryProvider } from "./src/context/SensoryContext";
 import { ProfileProvider } from "./src/context/ProfileContext";
 import { ThemeProvider, useTheme } from "./src/theme";
 
-function AppInner() {
+function AppNavigatorShell({ needsOnboarding }: { needsOnboarding: boolean }) {
+  const { colors, isDark } = useTheme();
+
+  const navTheme = {
+    ...(isDark ? DarkTheme : DefaultTheme),
+    colors: {
+      ...(isDark ? DarkTheme : DefaultTheme).colors,
+      background: colors.bg,
+      card: colors.headerBg,
+      text: colors.text,
+      border: colors.border,
+      primary: colors.teal,
+    },
+  };
+
+  return (
+    <NavigationContainer theme={navTheme}>
+      <AppNavigator initialRoute={needsOnboarding ? "Onboarding" : "Home"} />
+    </NavigationContainer>
+  );
+}
+
+export default function App() {
   const [ready, setReady] = useState(false);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { colors, isDark } = useTheme();
 
   useEffect(() => {
     let cancelled = false;
@@ -36,48 +57,28 @@ function AppInner() {
     };
   }, []);
 
-  const navTheme = {
-    ...(isDark ? DarkTheme : DefaultTheme),
-    colors: {
-      ...(isDark ? DarkTheme : DefaultTheme).colors,
-      background: colors.bg,
-      card: colors.headerBg,
-      text: colors.text,
-      border: colors.border,
-      primary: colors.teal,
-    },
-  };
-
   if (!ready) {
     return (
-      <react_native.View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.bg }}>
-        <react_native.Text style={{ color: colors.text }}>Loading...</react_native.Text>
+      <react_native.View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#f8fafc" }}>
+        <react_native.Text style={{ color: "#111827" }}>Loading...</react_native.Text>
       </react_native.View>
     );
   }
 
   if (error) {
     return (
-      <react_native.View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.bg, padding: 20 }}>
-        <react_native.Text style={{ fontSize: 18, fontWeight: "700", color: colors.danger }}>Init Error</react_native.Text>
-        <react_native.Text style={{ marginTop: 10, color: colors.text }}>{error}</react_native.Text>
+      <react_native.View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#f8fafc", padding: 20 }}>
+        <react_native.Text style={{ fontSize: 18, fontWeight: "700", color: "#b91c1c" }}>Init Error</react_native.Text>
+        <react_native.Text style={{ marginTop: 10, color: "#111827" }}>{error}</react_native.Text>
       </react_native.View>
     );
   }
 
   return (
-    <NavigationContainer theme={navTheme}>
-      <AppNavigator initialRoute={needsOnboarding ? "Onboarding" : "Home"} />
-    </NavigationContainer>
-  );
-}
-
-export default function App() {
-  return (
     <ThemeProvider>
       <SensoryProvider>
         <ProfileProvider>
-          <AppInner />
+          <AppNavigatorShell needsOnboarding={needsOnboarding} />
         </ProfileProvider>
       </SensoryProvider>
     </ThemeProvider>
