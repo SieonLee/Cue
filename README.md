@@ -280,12 +280,15 @@ For portfolio purposes, I would treat these as supporting features around the ma
 - TypeScript
 - React Navigation v7
 - Expo SQLite
+- sql.js for the web preview database layer
 - React Context
 - React Native Web
 
 ## Local-First Data Design
 
 All core product data is stored on device using SQLite.
+
+For the web preview, the app uses `sql.js` so the browser fallback stays close to real SQLite behavior instead of relying on a lightweight mock parser.
 
 Main persisted entities include:
 
