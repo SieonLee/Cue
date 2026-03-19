@@ -200,7 +200,15 @@ export function CoachScreen({ navigation }: Props) {
 
 const themedStyles = (c: ThemeColors) =>
   StyleSheet.create({
-    container: { flexGrow: 1, padding: spacing.page, gap: spacing.cardPad, paddingBottom: 28 },
+    container: {
+      flexGrow: 1,
+      padding: spacing.page,
+      gap: spacing.cardPad,
+      paddingBottom: 28,
+      width: "100%",
+      maxWidth: 760,
+      alignSelf: "center",
+    },
     title: { fontSize: 22, fontWeight: "700", color: c.text },
     subtitle: { fontSize: 14, color: c.text, opacity: 0.7, lineHeight: 20 },
 
